@@ -4,17 +4,17 @@ USE sharespace;
 DROP TABLE IF EXISTS user;
 CREATE TABLE user (
     id BIGINT NOT NULL,
-    nick_name VARCHAR(50) NULL,
-    email VARCHAR(50) NULL,
+    nick_name VARCHAR(50) NOT NULL,
+    email VARCHAR(50) NOT NULL,
     image TEXT NULL,
-    role ENUM('Host', 'Guest') NULL,
-    password VARCHAR(50) NULL,
+    role ENUM('Host', 'Guest') NOT NULL,
+    password VARCHAR(50) NOT NULL,
     lock_time DATETIME NULL,
-    failed_attempts INT NULL,
-    location VARCHAR(50) NULL,
-    latitude DOUBLE NULL,
-    longitude DOUBLE NULL,
-    email_validated BOOLEAN NULL,
+    failed_attempts INT NOT NULL DEFAULT 0,
+    location VARCHAR(50) NOT NULL,
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    email_validated BOOLEAN NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
 
@@ -22,11 +22,11 @@ DROP TABLE IF EXISTS place;
 CREATE TABLE place (
     id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    title VARCHAR(50) NULL,
-    category ENUM('대', '중', '소') NULL,
-    period INT NULL,
+    title VARCHAR(50) NOT NULL,
+    category ENUM('Large', 'Medium', 'Small') NOT NULL,
+    period INT NOT NULL,
     description VARCHAR(100) NULL,
-    image_url TEXT NULL,
+    image_url TEXT NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
@@ -35,13 +35,13 @@ DROP TABLE IF EXISTS product;
 CREATE TABLE product (
     id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    title VARCHAR(50) NULL,
-    category ENUM('대', '중', '소') NULL,
-    period INT NULL,
+    title VARCHAR(50) NOT NULL,
+    category ENUM('Large', 'Medium', 'Small') NOT NULL,
+    period INT NOT NULL,
     description VARCHAR(100) NULL,
-    image_url TEXT NULL,
-    writed_at DATETIME NULL,
-    is_placed BOOLEAN NULL COMMENT '장소 미배정 상태 관리',
+    image_url TEXT NOT NULL,
+    writed_at DATETIME NOT NULL,
+    is_placed BOOLEAN NOT NULL COMMENT '장소 미배정 상태 관리',
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
@@ -51,9 +51,9 @@ CREATE TABLE note (
     id BIGINT NOT NULL,
     id1 BIGINT NOT NULL,
     id2 BIGINT NOT NULL,
-    title VARCHAR(50) NULL,
-    content TEXT NULL,
-    send_at DATETIME NULL,
+    title VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL,
+    send_at DATETIME NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (id1) REFERENCES user (id),
     FOREIGN KEY (id2) REFERENCES user (id)
@@ -63,9 +63,9 @@ DROP TABLE IF EXISTS notification;
 CREATE TABLE notification (
     id BIGINT NOT NULL,
     user_id BIGINT NOT NULL COMMENT '알림 받는 대상',
-    is_read BOOLEAN NULL,
-    message TEXT NULL,
-    created_at DATETIME NULL,
+    is_read BOOLEAN NOT NULL DEFAULT 0,
+    message TEXT NOT NULL,
+    created_at DATETIME NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
@@ -76,10 +76,10 @@ CREATE TABLE matching (
     product_id BIGINT NOT NULL,
     place_id BIGINT NOT NULL,
     image TEXT NULL COMMENT '요청을 수락했을 경우 매칭 테이블에 저장됨.',
-    status ENUM('미배정', '요청됨', '반려됨', '대기중', '보관됨', '완료됨') NULL,
-    host_completed BOOLEAN NULL,
-    guest_completed BOOLEAN NULL,
-    distance INT NULL COMMENT 'm 단위로 저장',
+    status ENUM('Unassigned', 'Requested', 'Rejected', 'Pending', 'Stored', 'Completed') NOT NULL,
+    host_completed BOOLEAN NOT NULL DEFAULT 0,
+    guest_completed BOOLEAN NOT NULL DEFAULT 0,
+    distance INT NOT NULL COMMENT 'm 단위로 저장',
     PRIMARY KEY (id),
     FOREIGN KEY (product_id) REFERENCES product (id),
     FOREIGN KEY (place_id) REFERENCES place (id)
@@ -88,7 +88,7 @@ CREATE TABLE matching (
 DROP TABLE IF EXISTS contact;
 CREATE TABLE contact (
     id BIGINT NOT NULL,
-    title VARCHAR(50) NULL,
-    content VARCHAR(200) NULL,
+    title VARCHAR(50) NOT NULL,
+    content VARCHAR(200) NOT NULL,
     PRIMARY KEY (id)
 );
