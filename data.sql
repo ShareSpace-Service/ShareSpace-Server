@@ -1,7 +1,6 @@
 CREATE database sharespace;
 USE sharespace;
 
-DROP TABLE IF EXISTS user;
 CREATE TABLE user (
     id BIGINT NOT NULL,
     nick_name VARCHAR(50) NOT NULL,
@@ -18,7 +17,6 @@ CREATE TABLE user (
     PRIMARY KEY (id)
 );
 
-DROP TABLE IF EXISTS place;
 CREATE TABLE place (
     id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
@@ -31,7 +29,6 @@ CREATE TABLE place (
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
-DROP TABLE IF EXISTS product;
 CREATE TABLE product (
     id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
@@ -46,7 +43,6 @@ CREATE TABLE product (
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
-DROP TABLE IF EXISTS note;
 CREATE TABLE note (
     id BIGINT NOT NULL,
     id1 BIGINT NOT NULL,
@@ -59,7 +55,6 @@ CREATE TABLE note (
     FOREIGN KEY (id2) REFERENCES user (id)
 );
 
-DROP TABLE IF EXISTS notification;
 CREATE TABLE notification (
     id BIGINT NOT NULL,
     user_id BIGINT NOT NULL COMMENT '알림 받는 대상',
@@ -70,7 +65,6 @@ CREATE TABLE notification (
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
-DROP TABLE IF EXISTS matching;
 CREATE TABLE matching (
     id BIGINT NOT NULL,
     product_id BIGINT NOT NULL,
@@ -85,7 +79,6 @@ CREATE TABLE matching (
     FOREIGN KEY (place_id) REFERENCES place (id)
 );
 
-DROP TABLE IF EXISTS contact;
 CREATE TABLE contact (
     id BIGINT NOT NULL,
     title VARCHAR(50) NOT NULL,
