@@ -1,4 +1,4 @@
-package com.sharespace.sharespace_server.common.exception;
+package com.sharespace.sharespace_server.exception;
 
 import org.springframework.http.HttpStatus;
 
