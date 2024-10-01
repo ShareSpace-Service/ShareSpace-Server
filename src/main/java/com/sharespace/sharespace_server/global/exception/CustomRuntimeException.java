@@ -1,4 +1,4 @@
-package com.sharespace.sharespace_server.exception;
+package com.sharespace.sharespace_server.global.exception;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

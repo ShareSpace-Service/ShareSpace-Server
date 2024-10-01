@@ -1,10 +1,10 @@
-package com.sharespace.sharespace_server.exception.handler;
+package com.sharespace.sharespace_server.global.exception.handler;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.sharespace.sharespace_server.exception.CustomRuntimeException;
+import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,8 +1,8 @@
-package com.sharespace.sharespace_server.exception.error;
+package com.sharespace.sharespace_server.global.exception.error;
 
 import org.springframework.http.HttpStatus;
 
-import com.sharespace.sharespace_server.exception.CustomException;
+import com.sharespace.sharespace_server.global.exception.CustomException;
 
 import lombok.AllArgsConstructor;
 
