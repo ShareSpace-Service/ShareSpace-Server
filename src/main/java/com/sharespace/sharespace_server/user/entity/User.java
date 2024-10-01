@@ -1,6 +1,6 @@
 package com.sharespace.sharespace_server.user.entity;
 
-import com.sharespace.sharespace_server.enums.Role;
+import com.sharespace.sharespace_server.global.enums.Role;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
