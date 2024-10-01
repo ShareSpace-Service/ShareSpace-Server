@@ -74,6 +74,7 @@ CREATE TABLE matching (
     host_completed BOOLEAN NOT NULL DEFAULT 0,
     guest_completed BOOLEAN NOT NULL DEFAULT 0,
     distance INT NOT NULL COMMENT 'm 단위로 저장',
+    start_date DATETIME NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (product_id) REFERENCES product (id),
     FOREIGN KEY (place_id) REFERENCES place (id)
