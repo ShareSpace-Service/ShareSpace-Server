@@ -27,16 +27,16 @@ public class Note {
 
 	// @ManyToOne(fetch = FetchType.LAZY)
 	// @JoinColumn(name = "user_id", nullable = false)
-	// public User senderId;		// 송신자
+	// public User sender;		// 송신자
 
 	// @ManyToOne(fetch = FetchType.LAZY)
 	// @JoinColumn(name = "user_id", nullable = false)
-	// public User receiverId;		// 수신자
+	// public User receiver;		// 수신자
 
 	@Column(name = "title", nullable = false)
 	public String title;
 
-	@Column(name = "message", nullable = false)
+	@Column(name = "content", nullable = false)
 	public String content;
 
 	@Column(name = "created_at", nullable = false)
