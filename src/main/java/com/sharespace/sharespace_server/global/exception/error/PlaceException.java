@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public enum PlaceException implements CustomException {
-	EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 발급된 이메일입니다.");
+	PLACE_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 장소입니다.");
 
 	private final HttpStatus status;
 	private final String message;
