@@ -2,19 +2,17 @@ package com.sharespace.sharespace_server.place.dto;
 
 import com.sharespace.sharespace_server.global.enums.Category;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-@Getter
 @Setter
-@Builder
-@AllArgsConstructor
-public class PlacesResponse {
-	private Long placeId;
+@Getter
+@RequiredArgsConstructor
+public class PlaceRequest {
 	private String title;
 	private Category category;
-	private String imageUrl;
-	private String distance;
+	private Integer period;
+	private String image_url;
+	private String description;
 }

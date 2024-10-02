@@ -1,7 +1,5 @@
 package com.sharespace.sharespace_server.place.dto;
 
-import com.sharespace.sharespace_server.global.enums.Category;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,10 +9,11 @@ import lombok.Setter;
 @Setter
 @Builder
 @AllArgsConstructor
-public class PlacesResponse {
+public class PlaceDetailResponse {
 	private Long placeId;
 	private String title;
-	private Category category;
+	private String category;
+	private Integer period;
 	private String imageUrl;
-	private String distance;
+	private String description;
 }
