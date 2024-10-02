@@ -3,8 +3,8 @@ package com.sharespace.sharespace_server.product.entity;
 import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.user.entity.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "product", schema = "sharespace")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +40,7 @@ public class Product {
     @Column(name = "image_url", columnDefinition = "TEXT", nullable = false)
     private String imageUrl;
 
+    @CreationTimestamp
     @Column(name = "writed_at", nullable = false)
     private LocalDateTime writedAt;
 
