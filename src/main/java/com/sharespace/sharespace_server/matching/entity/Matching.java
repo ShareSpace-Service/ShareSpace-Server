@@ -3,6 +3,8 @@ package com.sharespace.sharespace_server.matching.entity;
 import java.time.LocalDateTime;
 
 import com.sharespace.sharespace_server.global.enums.Status;
+import com.sharespace.sharespace_server.place.entity.Place;
+import com.sharespace.sharespace_server.product.entity.Product;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +13,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,7 +31,7 @@ public class Matching {
 	private Long id;
 
 	// productId와 placeId 연관관계 매핑하기
-	/*
+
 	@ManyToOne
 	@JoinColumn(name = "product_id", nullable = false)
 	private Product product;
@@ -35,7 +39,7 @@ public class Matching {
 	@ManyToOne
 	@JoinColumn(name = "place_id", nullable = false)
 	private Place place;
-	*/
+
 
 	@Column(columnDefinition = "TEXT")
 	private String image;
