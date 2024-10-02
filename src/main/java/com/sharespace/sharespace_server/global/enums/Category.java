@@ -1,4 +1,4 @@
-package com.sharespace.sharespace_server.enums;
+package com.sharespace.sharespace_server.global.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
