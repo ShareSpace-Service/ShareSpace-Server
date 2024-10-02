@@ -1,6 +1,6 @@
 package com.sharespace.sharespace_server.product.entity;
 
-import com.sharespace.sharespace_server.enums.Category;
+import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
