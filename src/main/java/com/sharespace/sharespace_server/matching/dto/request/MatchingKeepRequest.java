@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MatchingRequestDto {
+public class MatchingKeepRequest {
 	private Long productId;
 	private Long placeId;
 }
