@@ -2,11 +2,11 @@ CREATE database sharespace;
 USE sharespace;
 
 CREATE TABLE user (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     nick_name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
     image TEXT NULL,
-    role ENUM('Host', 'Guest') NOT NULL,
+    role ENUM('ROLE_HOST', 'ROLE_GUEST') NOT NULL,
     password VARCHAR(50) NOT NULL,
     lock_time DATETIME NULL,
     failed_attempts INT NOT NULL DEFAULT 0,
@@ -18,10 +18,10 @@ CREATE TABLE user (
 );
 
 CREATE TABLE place (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     user_id BIGINT NOT NULL,
     title VARCHAR(50) NOT NULL,
-    category ENUM('Large', 'Medium', 'Small') NOT NULL,
+    category ENUM('LARGE', 'MEDIUM', 'SMALL') NOT NULL,
     period INT NOT NULL,
     description VARCHAR(100) NULL,
     image_url TEXT NOT NULL,
@@ -30,10 +30,10 @@ CREATE TABLE place (
 );
 
 CREATE TABLE product (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     user_id BIGINT NOT NULL,
     title VARCHAR(50) NOT NULL,
-    category ENUM('Large', 'Medium', 'Small') NOT NULL,
+    category ENUM('LARGE', 'MEDIUM', 'SMALL') NOT NULL,
     period INT NOT NULL,
     description VARCHAR(100) NULL,
     image_url TEXT NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE product (
 );
 
 CREATE TABLE note (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     id1 BIGINT NOT NULL,
     id2 BIGINT NOT NULL,
     title VARCHAR(50) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE note (
 );
 
 CREATE TABLE notification (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     user_id BIGINT NOT NULL COMMENT '알림 받는 대상',
     is_read BOOLEAN NOT NULL DEFAULT 0,
     message TEXT NOT NULL,
@@ -66,11 +66,11 @@ CREATE TABLE notification (
 );
 
 CREATE TABLE matching (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     product_id BIGINT NOT NULL,
     place_id BIGINT NOT NULL,
     image TEXT NULL COMMENT '요청을 수락했을 경우 매칭 테이블에 저장됨.',
-    status ENUM('Unassigned', 'Requested', 'Rejected', 'Pending', 'Stored', 'Completed') NOT NULL,
+    status ENUM('UNASSIGNED', 'REQUESTED', 'REJECTED', 'PENDING', 'STORED', 'COMPLETED') NOT NULL,
     host_completed BOOLEAN NOT NULL DEFAULT 0,
     guest_completed BOOLEAN NOT NULL DEFAULT 0,
     distance INT NOT NULL COMMENT 'm 단위로 저장',
@@ -81,8 +81,14 @@ CREATE TABLE matching (
 );
 
 CREATE TABLE contact (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     title VARCHAR(50) NOT NULL,
     content VARCHAR(200) NOT NULL,
     PRIMARY KEY (id)
 );
+
+
+INSERT INTO user (nick_name, email, image, role, password, location, latitude, longitude, email_validated)
+VALUES
+    ('호스트민우갓', 'hostminwoo@example.com', 'temporary image url', 'ROLE_HOST', '1234', '서울', 200, 100, 1),
+    ('게스트민우갓', 'guestminwoo@example.com', 'temporary image url', 'ROLE_GUEST', '1234', '경기', 100, 200, 1);
