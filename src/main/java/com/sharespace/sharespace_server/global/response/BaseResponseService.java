@@ -10,7 +10,7 @@ public interface BaseResponseService {
 	 * @param <T> 반환 타입 => Generic
 	 * @return BaseResponse - 응답 객체
 	 */
-	<T> BaseResponse<Object> getSuccessResponse(T data);
+	<T> BaseResponse<T> getSuccessResponse(T data);
 
 	/**
 	 * 성공 응답 메서드 - 전달 데이터 X
@@ -18,7 +18,7 @@ public interface BaseResponseService {
 	 * @param <T> 반환 타입 => Generic
 	 * @return BaseResponse - 응답 객체
 	 */
-	<T> BaseResponse<Object> getSuccessResponse();
+	<T> BaseResponse<T> getSuccessResponse();
 
 	/**
 	 * 실패 응답 메서드의 경우, CustomException 핸들러를 활용한다.

@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class BaseResponseServiceImpl implements BaseResponseService {
 	@Override
-	public <T> BaseResponse<Object> getSuccessResponse(T data) {
-		return BaseResponse.builder()
+	public <T> BaseResponse<T> getSuccessResponse(T data) {
+		return BaseResponse.<T>builder()
 			.isSuccess(true)
 			.status(HttpStatus.OK)
 			.message(BaseResponseStatus.SUCCESS.getMessage())
@@ -16,8 +16,8 @@ public class BaseResponseServiceImpl implements BaseResponseService {
 	}
 
 	@Override
-	public <T> BaseResponse<Object> getSuccessResponse() {
-		return BaseResponse.builder()
+	public <T> BaseResponse<T> getSuccessResponse() {
+		return BaseResponse.<T>builder()
 			.isSuccess(true)
 			.status(HttpStatus.OK)
 			.message(BaseResponseStatus.SUCCESS.getMessage())
