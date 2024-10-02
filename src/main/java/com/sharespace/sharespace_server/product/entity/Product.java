@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.product.entity;
 
+import com.sharespace.sharespace_server.enums.Category;
 import com.sharespace.sharespace_server.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -16,16 +17,16 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;  // 외래 키로 User와의 관계 설정
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;  // 외래 키로 User와의 관계 설정
 
     @Column(name = "title", nullable = false, length = 50)
     private String title;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "category", nullable = false, length = 10)
-//    private Category category;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 10)
+    private Category category;
 
     @Column(name = "period", nullable = false)
     private int period;
