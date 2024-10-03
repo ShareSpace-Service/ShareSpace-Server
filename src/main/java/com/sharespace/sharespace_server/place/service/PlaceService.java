@@ -1,12 +1,16 @@
 package com.sharespace.sharespace_server.place.service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.sharespace.sharespace_server.global.enums.Category;
+import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
+import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
@@ -16,6 +20,8 @@ import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.place.dto.PlacesResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
+import com.sharespace.sharespace_server.product.entity.Product;
+import com.sharespace.sharespace_server.product.repository.ProductRepository;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 
@@ -30,6 +36,7 @@ public class PlaceService {
 	final BaseResponseService baseResponseService;
 	private final UserRepository userRepository;
 	private final PlaceRepository placeRepository;
+	private final ProductRepository productRepository;
 
 	@Transactional
 	public BaseResponse<List<PlacesResponse>> getAllPlaces() {
@@ -48,7 +55,22 @@ public class PlaceService {
 
 	@Transactional
 	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(Long productId) {
-		return null;
+		Product product = productRepository.findById(productId)
+			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
+		
+		List<Category> categories = product.getCategory().getRelatedCategories();
+
+		List<PlacesResponse> places = placeRepository.findAllByCategoryIn(categories).stream()
+			.map(place -> PlacesResponse.builder()
+				.placeId(place.getId())
+				.title(place.getTitle())
+				.category(place.getCategory())
+				.imageUrl(place.getImageUrl())
+				// .distance()  // matching table에서 가져오기
+				.build())
+			.toList();
+
+		return baseResponseService.getSuccessResponse(places);
 	}
 
 	@Transactional
