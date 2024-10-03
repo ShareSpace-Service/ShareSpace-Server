@@ -11,7 +11,6 @@ import java.util.Map;
 
 @Component
 public class LocationTransform {
-
     @Value("${kakao.url}")
     private String apiUrl;
 
@@ -23,6 +22,8 @@ public class LocationTransform {
     public LocationTransform() {
         this.restTemplate = new RestTemplate();
     }
+
+    private static final double EARTH_RADIUS = 6371000; // 지구 반지름 (미터)
 
     public Map<String, Double> getCoordinates(String roadName) {
         // URI 빌더를 사용하여 쿼리 파라미터 추가
@@ -60,5 +61,39 @@ public class LocationTransform {
             }
         }
         throw new CustomRuntimeException(LocationException.FETCH_FAIL);
+    }
+
+    /**
+     * 두 지점의 위도와 경도를 받아 거리를 계산한 후, 반올림하여 미터 단위의 정수값으로 반환합니다.
+     * <p>
+     * 사용 방법:
+     * <pre>{@code
+     * // LocationTransform 인스턴스를 생성합니다.
+     * private final LocationTransform locationTransform;
+     *
+     * // calculateDistance 메서드를 호출하여 두 지점 간의 거리를 계산합니다.
+     * Integer distance = locationTransform.calculateDistance(lat1, lon1, lat2, lon2);
+     *
+     * }</pre>
+     * </p>
+     *
+     * @param lat1 Guest Latitude(위도)
+     * @param lon1 Guest Longitude(경도)
+     * @param lat2 Host Latitude(위도)
+     * @param lon2 Host Longitude(경도)
+     * @return 거리를 계산 후 정수의 값으로 반올림한 값
+     */
+    public Integer calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        // Haversine 공식 적용
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+            * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        // 지구 반지름을 곱하여 거리 계산, 결과값을 반올림하여 반환
+        return (int) Math.round(EARTH_RADIUS * c);
     }
 }
