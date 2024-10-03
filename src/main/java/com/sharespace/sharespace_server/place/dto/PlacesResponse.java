@@ -16,5 +16,5 @@ public class PlacesResponse {
 	private String title;
 	private Category category;
 	private String imageUrl;
-	private String distance;
+	private Integer distance;
 }
