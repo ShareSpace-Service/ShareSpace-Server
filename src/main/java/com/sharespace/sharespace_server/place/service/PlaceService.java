@@ -52,7 +52,7 @@ public class PlaceService {
 		User host = userRepository.findById(place.getUser().getId())
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
-		Integer distance = DistanceUtils.calculateRoundedDistance(guest.getLatitude(), guest.getLongitude(), host.getLatitude(), host.getLongitude());
+		Integer distance = DistanceUtils.calculateDistance(guest.getLatitude(), guest.getLongitude(), host.getLatitude(), host.getLongitude());
 
 		return PlacesResponse.builder()
 			.placeId(place.getId())
