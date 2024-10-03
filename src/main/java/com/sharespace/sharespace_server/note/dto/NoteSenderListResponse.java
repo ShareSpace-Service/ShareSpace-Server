@@ -9,9 +9,7 @@ import lombok.Setter;
 @Setter
 @Builder
 @AllArgsConstructor
-public class NoteResponse {
-	private Long noteId;
-	private String title;
-	private String content;
-	private String sender;
+public class NoteSenderListResponse {
+	private Long receiverId;
+	private String nickname;
 }
