@@ -13,7 +13,6 @@ import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
-import com.sharespace.sharespace_server.global.utils.DistanceUtils;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
 import com.sharespace.sharespace_server.place.dto.PlaceRequest;
@@ -52,7 +51,9 @@ public class PlaceService {
 		User host = userRepository.findById(place.getUser().getId())
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
-		Integer distance = DistanceUtils.calculateDistance(guest.getLatitude(), guest.getLongitude(), host.getLatitude(), host.getLongitude());
+		Integer distance = locationTransform.calculateDistance(
+			guest.getLatitude(), guest.getLongitude(), host.getLatitude(), host.getLongitude()
+		);
 
 		return PlacesResponse.builder()
 			.placeId(place.getId())
