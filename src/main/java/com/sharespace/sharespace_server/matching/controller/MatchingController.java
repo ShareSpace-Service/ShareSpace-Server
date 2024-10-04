@@ -39,5 +39,11 @@ public class MatchingController {
 		return matchingService.completeStorage(matchingId);
 	}
 
+	@GetMapping("/requestDetail")
+	public BaseResponse<Void> showRequestDetail(@RequestParam("matchingId") @NotNull Long matchingId) {
+		return matchingService.showRequestDetail(matchingId);
+	}
+
 
 }
+
