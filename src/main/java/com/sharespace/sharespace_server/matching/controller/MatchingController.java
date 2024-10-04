@@ -2,6 +2,7 @@ package com.sharespace.sharespace_server.matching.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,6 +29,11 @@ public class MatchingController {
 	@GetMapping("/keepDetail")
 	public BaseResponse<MatchingShowKeepDetailResponse> showKeepDetail(@RequestParam("matchingId") Long matchingId) {
 		return matchingService.showKeepDetail(matchingId);
+	}
+
+	@PutMapping("/completeStorage")
+	public BaseResponse<Void> completeStorage(@RequestBody Long matchingId) {
+		return matchingService.completeStorage(matchingId);
 	}
 
 
