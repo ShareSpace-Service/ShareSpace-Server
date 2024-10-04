@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sharespace.sharespace_server.global.response.BaseResponse;
+import com.sharespace.sharespace_server.matching.dto.request.MatchingCompleteStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
 import com.sharespace.sharespace_server.matching.service.MatchingService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -27,12 +29,13 @@ public class MatchingController {
 	}
 
 	@GetMapping("/keepDetail")
-	public BaseResponse<MatchingShowKeepDetailResponse> showKeepDetail(@RequestParam("matchingId") Long matchingId) {
+	public BaseResponse<MatchingShowKeepDetailResponse> showKeepDetail(@RequestParam("matchingId") @NotNull Long matchingId) {
 		return matchingService.showKeepDetail(matchingId);
 	}
 
 	@PutMapping("/completeStorage")
-	public BaseResponse<Void> completeStorage(@RequestBody Long matchingId) {
+	public BaseResponse<Void> completeStorage(@Valid @RequestBody MatchingCompleteStorageRequest matchingCompleteStorageRequest) {
+		Long matchingId = matchingCompleteStorageRequest.getMatchingId();
 		return matchingService.completeStorage(matchingId);
 	}
 
