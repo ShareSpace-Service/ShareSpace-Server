@@ -10,7 +10,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public enum UserException implements CustomException {
     EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 발급된 이메일입니다."),
+    NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "이미 존재하는 닉네임입니다."),
     MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 유저입니다."),
+    INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호 양식을 지켜주세요."),
+    PASSWORD_VALIDATE_FAIL(HttpStatus.BAD_REQUEST, "비밀번호와 비밀번호 확인란에 기입된 값이 다릅니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 틀렸습니다.");
 
     private final HttpStatus status;
