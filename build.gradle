@@ -55,6 +55,10 @@ dependencies {
 	// Hibernate ORM
 	implementation 'org.hibernate.orm:hibernate-core:6.0.0.Final'
 
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 }
 

@@ -5,6 +5,17 @@ spring:
     password: ${DEV_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  mail:
+    host: smtp.naver.com
+    port: 465
+    username: teamsharespace@naver.com
+    password: ${MAIL_SMTP_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.ssl.enable: true
+      mail.smtp.ssl.trust: smtp.naver.com
+      mail.debug: true
+
 kakao:
   url: https://dapi.kakao.com/v2/local/search/address.json?query=
   api-key: ${KAKAO_API_KEY}
