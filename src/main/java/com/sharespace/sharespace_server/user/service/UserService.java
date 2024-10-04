@@ -5,6 +5,7 @@ import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
+import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class UserService {
     private final LocationTransform locationTransform;
     private final BCryptPasswordEncoder encoder;
     private final JavaMailSender javaMailSender;
+    private final Map<String, Integer> verificationCodes = new ConcurrentHashMap<>();
 
     public BaseResponse<Long> register(UserRegisterRequest request) {
 
@@ -63,6 +66,18 @@ public class UserService {
         return baseResponseService.getSuccessResponse(user.getId());
     }
 
+    public BaseResponse<Void> emailValidate(UserEmailValidateRequest request) {
+
+        User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        // 이메일 인증 확인 메소드 호출
+        verifyCode(user.getEmail(), request.getValidationNumber());
+
+        user.setEmailValidated(true);
+        userRepository.save(user);
+
+        return baseResponseService.getSuccessResponse();
+    }
+
     // 이메일 중복 검사 메소드
     private void emailDuplicate(String email) {
         if(userRepository.findByEmail(email).isPresent()) {
@@ -95,11 +110,22 @@ public class UserService {
             e.printStackTrace();
         }
 
-        System.out.println(number);
-        System.out.println(message);
+        // 이메일과 인증번호를 메모리에 저장
+        verificationCodes.put(Email, number);
 
         javaMailSender.send(message);
     }
 
+    // 이메일 인증 확인 메소드
+    public void verifyCode(String email, Integer number) {
+        Integer storedCode = verificationCodes.get(email);
+
+        // 인증번호 확인
+        if (storedCode != null && storedCode.equals(number)) {
+            verificationCodes.remove(email);
+        } else {
+            throw new CustomRuntimeException(UserException.EMAIL_VALIDATION_FAIL);
+        }
+    }
 
 }
