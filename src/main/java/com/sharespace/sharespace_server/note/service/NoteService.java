@@ -71,7 +71,7 @@ public class NoteService {
 	@Transactional
 	public BaseResponse<String> createNote(NoteRequest noteRequest) {
 		// User Id 불러오기
-		User sender = userRepository.findById(1L)
+		User sender = userRepository.findById(4L)
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
 		User receiver = userRepository.findById(noteRequest.getReceiverId())
@@ -83,6 +83,21 @@ public class NoteService {
 
 		if (noteRequest.getReceiverId() == null) {
 			throw new CustomRuntimeException(NoteException.RECEIVER_NOT_FOUND);
+		}
+
+		Long placeUserId = sender.getRole().equals(Role.ROLE_HOST) ? sender.getId() : receiver.getId();
+		Long placeId = placeRepository.findByUserId(placeUserId)
+			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING)).getId();
+
+		Long productUserId = sender.getRole().equals(Role.ROLE_HOST) ? receiver.getId() : sender.getId();
+		List<Long> productIds = productRepository.findAllByUserId(productUserId).stream()
+			.map(Product::getId)
+			.toList();
+
+		Matching matching = matchingRepository.findByProductIdInAndPlaceId(productIds, placeId);
+
+		if (matching == null) {
+			throw new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING);
 		}
 
 		Note note = Note.builder()
