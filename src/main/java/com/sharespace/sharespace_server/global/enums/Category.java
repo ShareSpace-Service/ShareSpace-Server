@@ -8,9 +8,11 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum Category {
-	SMALL,
-	MEDIUM,
-	LARGE;
+	SMALL(0),
+	MEDIUM(1),
+	LARGE(2);
+
+	final Integer value;
 
 	public List<Category> getRelatedCategories() {
 		return switch (this) {
