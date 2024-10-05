@@ -14,12 +14,15 @@ import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
+import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
 import com.sharespace.sharespace_server.place.dto.MatchingPlaceResponse;
+import com.sharespace.sharespace_server.place.dto.PlaceRequestedDetailResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
 import com.sharespace.sharespace_server.product.dto.MatchingProductDto;
+import com.sharespace.sharespace_server.product.dto.ProductRequestedDetailResponse;
 import com.sharespace.sharespace_server.product.entity.Product;
 import com.sharespace.sharespace_server.product.repository.ProductRepository;
 import com.sharespace.sharespace_server.user.entity.User;
@@ -173,6 +176,18 @@ public class MatchingService {
 		}
 	}
 
-	public BaseResponse<Void> showRequestDetail(Long matchingId) {
+	public BaseResponse<MatchingShowRequestDetailResponse> showRequestDetail(Long matchingId) {
+		Matching matching = matchingRepository.findById(matchingId)
+			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+
+		PlaceRequestedDetailResponse placeResponse = PlaceRequestedDetailResponse.of(matching.getPlace());
+		ProductRequestedDetailResponse productResponse = ProductRequestedDetailResponse.of(matching.getProduct());
+		MatchingShowRequestDetailResponse response = MatchingShowRequestDetailResponse.builder()
+			.placeRequestedDetailResponse(placeResponse)
+			.productRequestedDetailResponse(productResponse)
+			.build();
+
+
+		return baseResponseService.getSuccessResponse(response);
 	}
 }
