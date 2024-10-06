@@ -2,7 +2,8 @@ package com.sharespace.sharespace_server.matching.service;
 
 import java.time.LocalDateTime;
 
-import com.sharespace.sharespace_server.matching.dto.request.MatchingAcceptRequestHostRequest;
+import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
+import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
 import org.springframework.stereotype.Service;
 
 import com.sharespace.sharespace_server.global.enums.Status;
@@ -102,8 +103,7 @@ public class MatchingService {
 	 * @throws CustomRuntimeException - 주어진 matchingId에 해당하는 매칭을 찾을 수 없는 경우 예외 발생
 	 */
 	public BaseResponse<MatchingShowKeepDetailResponse> showKeepDetail(Long matchingId) {
-		Matching matching = matchingRepository.findById(matchingId)
-			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+		Matching matching = findMatching(matchingId);
 
 		MatchingProductDto matchingProductDto = MatchingProductDto.from(matching.getProduct());
 		MatchingPlaceResponse matchingPlaceResponse = MatchingPlaceResponse.from(matching.getPlace());
@@ -134,9 +134,7 @@ public class MatchingService {
 		User user = userRepository.findById(1L) // TODO: 토큰에서 유저 정보 받아오는 것으로 변경 예정
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
-		Matching matching = matchingRepository.findById(matchingId)
-			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
-
+		Matching matching = findMatching(matchingId);
 		// user의 권한을 확인한다. HOST인지, GUEST인지에 따라 동작이 바뀐다.
 		if (user.getRole().getValue().equals("GUEST")) {
 			validateGuest(matching, user);
@@ -178,8 +176,7 @@ public class MatchingService {
 	}
 
 	public BaseResponse<MatchingShowRequestDetailResponse> showRequestDetail(Long matchingId) {
-		Matching matching = matchingRepository.findById(matchingId)
-			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+		Matching matching = findMatching(matchingId);
 
 		PlaceRequestedDetailResponse placeResponse = PlaceRequestedDetailResponse.of(matching.getPlace());
 		ProductRequestedDetailResponse productResponse = ProductRequestedDetailResponse.of(matching.getProduct());
@@ -192,9 +189,8 @@ public class MatchingService {
 		return baseResponseService.getSuccessResponse(response);
 	}
 
-    public BaseResponse<Void> hostAcceptRequest(MatchingAcceptRequestHostRequest request) {
-		Matching matching = matchingRepository.findById(request.getMatchingId())
-				.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+    public BaseResponse<Void> hostAcceptRequest(MatchingHostAcceptRequestRequest request) {
+		Matching matching = findMatching(request.getMatchingId());
 		if (request.isAccepted()) {
 			matching.setStatus(Status.PENDING);
 		} else {
@@ -203,4 +199,14 @@ public class MatchingService {
 		matchingRepository.save(matching);
 		return baseResponseService.getSuccessResponse();
     }
+
+	public BaseResponse<Void> guestConfirmStorage(MatchingGuestConfirmStorageRequest request) {
+		Matching matching = findMatching(request.getMatchingId());
+		return baseResponseService.getSuccessResponse();
+	}
+
+	public Matching findMatching(Long matchingId) {
+        return matchingRepository.findById(matchingId)
+				.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+	}
 }
