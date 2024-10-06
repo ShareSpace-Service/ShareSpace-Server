@@ -2,6 +2,7 @@ package com.sharespace.sharespace_server.matching.service;
 
 import java.time.LocalDateTime;
 
+import com.sharespace.sharespace_server.matching.dto.request.MatchingAcceptRequestHostRequest;
 import org.springframework.stereotype.Service;
 
 import com.sharespace.sharespace_server.global.enums.Status;
@@ -49,15 +50,15 @@ public class MatchingService {
 	 * 3. 이미 동일한 Product와 Place로 매칭이 존재하는 경우 예외를 던짐
 	 * 4. Matching을 생성하고, Product의 isPlaced 상태를 true로 업데이트
 	 *
-	 * @param matchingKeepRequest - 매칭을 위한 Place와 Product의 ID를 포함하는 요청 객체
+	 * @param request - 매칭을 위한 Place와 Product의 ID를 포함하는 요청 객체
 	 * @return BaseResponse<Void> - 성공 시 응답 객체 (데이터 없음)
 	 * @throws CustomRuntimeException - Place나 Product가 존재하지 않거나, 카테고리 불일치 또는 매칭 중복 시 발생
 	 */
-	public BaseResponse<Void> keep(MatchingKeepRequest matchingKeepRequest) {
+	public BaseResponse<Void> keep(MatchingKeepRequest request) {
 		// Place와 Product를 찾고, 유효성 검사
-		Place place = placeRepository.findById(matchingKeepRequest.getPlaceId())
+		Place place = placeRepository.findById(request.getPlaceId())
 		.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
-		Product product = productRepository.findById(matchingKeepRequest.getProductId())
+		Product product = productRepository.findById(request.getProductId())
 			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
 
 		// 2024-10-04 : Product의 카테고리 값이 Place보다 클 경우 예외처리
@@ -190,4 +191,15 @@ public class MatchingService {
 
 		return baseResponseService.getSuccessResponse(response);
 	}
+
+    public BaseResponse<Void> hostAcceptRequest(MatchingAcceptRequestHostRequest request) {
+		Matching matching = matchingRepository.findById(request.getMatchingId())
+				.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+		if (request.isAccepted()) {
+			matching.setStatus(Status.PENDING);
+		} else {
+			matching.setStatus(Status.REJECTED);
+		}
+		return baseResponseService.getSuccessResponse();
+    }
 }
