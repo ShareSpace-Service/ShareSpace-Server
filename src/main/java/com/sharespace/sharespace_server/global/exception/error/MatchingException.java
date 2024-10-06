@@ -14,6 +14,7 @@ public enum MatchingException implements CustomException {
 	MATCHING_PLACE_NOT_IN_USER(HttpStatus.BAD_REQUEST, "해당 매칭의 Place를 가지고 있지 않는 유저입니다."),
 	GUEST_ALREADY_COMPLETED_KEEPING(HttpStatus.BAD_REQUEST, "Guest는 이미 보관처리를 완료하였습니다."),
 	HOST_ALREADY_COMPLETED_KEEPING(HttpStatus.BAD_REQUEST, "Guest는 이미 보관처리를 완료하였습니다."),
+	INCORRECT_STATUS_CONFIRM_REQUEST_GUEST(HttpStatus.BAD_REQUEST, "Guest가 물품 보관을 수락하려면 Status가 '보관 대기중(Pending)' 이어야합니다."),
 	ALREADY_EXISTED_MATCHING(HttpStatus.BAD_REQUEST, "이미 존재하는 매칭입니다.");
 
 	private final HttpStatus status;
