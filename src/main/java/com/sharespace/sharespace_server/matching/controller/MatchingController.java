@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.matching.controller;
 
+import com.sharespace.sharespace_server.matching.dto.request.MatchingAcceptRequestHostRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,8 +26,8 @@ import lombok.RequiredArgsConstructor;
 public class MatchingController {
 	private final MatchingService matchingService;
 	@PostMapping("/keep")
-	public BaseResponse<Void> keep(@Valid @RequestBody MatchingKeepRequest matchingKeepRequest) {
-		return matchingService.keep(matchingKeepRequest);
+	public BaseResponse<Void> keep(@Valid @RequestBody MatchingKeepRequest request) {
+		return matchingService.keep(request);
 	}
 
 	@GetMapping("/keepDetail")
@@ -35,8 +36,8 @@ public class MatchingController {
 	}
 
 	@PutMapping("/completeStorage")
-	public BaseResponse<Void> completeStorage(@Valid @RequestBody MatchingCompleteStorageRequest matchingCompleteStorageRequest) {
-		Long matchingId = matchingCompleteStorageRequest.getMatchingId();
+	public BaseResponse<Void> completeStorage(@Valid @RequestBody MatchingCompleteStorageRequest request) {
+		Long matchingId = request.getMatchingId();
 		return matchingService.completeStorage(matchingId);
 	}
 
@@ -45,6 +46,10 @@ public class MatchingController {
 		return matchingService.showRequestDetail(matchingId);
 	}
 
+	@PostMapping("/acceptRequest/host")
+	public BaseResponse<Void> hostAcceptRequest(@Valid @RequestBody MatchingAcceptRequestHostRequest request) {
+		return matchingService.hostAcceptRequest(request);
+	}
 
 }
 
