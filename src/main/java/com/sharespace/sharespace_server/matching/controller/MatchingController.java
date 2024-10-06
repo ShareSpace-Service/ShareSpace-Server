@@ -12,6 +12,7 @@ import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingCompleteStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
+import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
 import com.sharespace.sharespace_server.matching.service.MatchingService;
 
 import jakarta.validation.Valid;
@@ -39,5 +40,11 @@ public class MatchingController {
 		return matchingService.completeStorage(matchingId);
 	}
 
+	@GetMapping("/requestDetail")
+	public BaseResponse<MatchingShowRequestDetailResponse> showRequestDetail(@RequestParam("matchingId") @NotNull Long matchingId) {
+		return matchingService.showRequestDetail(matchingId);
+	}
+
 
 }
+
