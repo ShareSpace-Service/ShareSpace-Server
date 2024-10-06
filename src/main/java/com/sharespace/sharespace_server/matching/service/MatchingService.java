@@ -200,6 +200,7 @@ public class MatchingService {
 		} else {
 			matching.setStatus(Status.REJECTED);
 		}
+		matchingRepository.save(matching);
 		return baseResponseService.getSuccessResponse();
     }
 }
