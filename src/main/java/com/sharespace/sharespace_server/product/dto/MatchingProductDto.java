@@ -7,14 +7,14 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ProductDto {
+public class MatchingProductDto {
 	private String title;
 	private int period;
 	private String description;
 	private String category;
 
-	public static ProductDto from(Product product) {
-		return ProductDto.builder()
+	public static MatchingProductDto from(Product product) {
+		return MatchingProductDto.builder()
 			.title(product.getTitle())
 			.period(product.getPeriod())
 			.description(product.getDescription())
