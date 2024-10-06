@@ -1,6 +1,7 @@
 package com.sharespace.sharespace_server.matching.controller;
 
-import com.sharespace.sharespace_server.matching.dto.request.MatchingAcceptRequestHostRequest;
+import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
+import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -47,9 +48,14 @@ public class MatchingController {
 	}
 
 	@PostMapping("/acceptRequest/host")
-	public BaseResponse<Void> hostAcceptRequest(@Valid @RequestBody MatchingAcceptRequestHostRequest request) {
+	public BaseResponse<Void> hostAcceptRequest(@Valid @RequestBody MatchingHostAcceptRequestRequest request) {
 		return matchingService.hostAcceptRequest(request);
 	}
 
+	@PutMapping("/confirmStorage/guest")
+	public BaseResponse<Void> guestConfirmStorage(@RequestBody MatchingGuestConfirmStorageRequest request) {
+		return matchingService.guestConfirmStorage(request);
+
+	}
 }
 

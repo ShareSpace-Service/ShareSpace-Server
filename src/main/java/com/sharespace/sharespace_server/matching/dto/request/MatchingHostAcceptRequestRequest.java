@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class MatchingAcceptRequestHostRequest {
+public class MatchingHostAcceptRequestRequest {
 
     @NotNull
     private Long matchingId;
