@@ -32,6 +32,9 @@ import com.sharespace.sharespace_server.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import static com.sharespace.sharespace_server.global.enums.Status.PENDING;
+import static com.sharespace.sharespace_server.global.enums.Status.STORED;
+
 @Service
 @RequiredArgsConstructor
 public class MatchingService {
@@ -192,7 +195,7 @@ public class MatchingService {
     public BaseResponse<Void> hostAcceptRequest(MatchingHostAcceptRequestRequest request) {
 		Matching matching = findMatching(request.getMatchingId());
 		if (request.isAccepted()) {
-			matching.setStatus(Status.PENDING);
+			matching.setStatus(PENDING);
 		} else {
 			matching.setStatus(Status.REJECTED);
 		}
@@ -202,6 +205,17 @@ public class MatchingService {
 
 	public BaseResponse<Void> guestConfirmStorage(MatchingGuestConfirmStorageRequest request) {
 		Matching matching = findMatching(request.getMatchingId());
+
+		// 예외처리 1. Matching의 Status가 PENDING(보관 대기중)이어야 올바른 응답을 반환해야함
+		if (!matching.getStatus().equals(PENDING)) {
+			throw new CustomRuntimeException(MatchingException.INCORRECT_STATUS_CONFIRM_REQUEST_GUEST);
+		}
+
+		// NOTE : Matching의 ImageUrl이 null일 때 예외처리를 해줘야할까?
+
+		matching.setStatus(STORED);
+		matchingRepository.save(matching);
+
 		return baseResponseService.getSuccessResponse();
 	}
 
