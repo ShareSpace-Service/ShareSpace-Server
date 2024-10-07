@@ -7,6 +7,7 @@ import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
+import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
@@ -68,6 +69,8 @@ public class UserService {
         return baseResponseService.getSuccessResponse(user.getId());
     }
 
+    // 이메일 인증여부 업데이트
+    @Transactional
     public BaseResponse<Void> emailValidate(UserEmailValidateRequest request) {
 
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
@@ -75,6 +78,30 @@ public class UserService {
         verifyCode(user.getEmail(), request.getValidationNumber());
 
         user.setEmailValidated(true);
+        userRepository.save(user);
+
+        return baseResponseService.getSuccessResponse();
+    }
+
+    // 회원 정보 수정
+    @Transactional
+    public BaseResponse<Void> update(UserUpdateRequest request) {
+        User user = userRepository.findById(request.getUserId()).orElseThrow(
+                () -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND)
+        );
+
+        // 주소 위/경도 변환 메소드 호출
+        Map<String, Double> coordinates = locationTransform.getCoordinates(request.getLocation());
+
+        Double latitude = coordinates.get("latitude");
+        Double longitude = coordinates.get("longitude");
+
+        user.setLocation(request.getLocation());
+        user.setLatitude(latitude);
+        user.setLongitude(longitude);
+        user.setImage(request.getImage());
+        user.setNickName(request.getNickName());
+
         userRepository.save(user);
 
         return baseResponseService.getSuccessResponse();
