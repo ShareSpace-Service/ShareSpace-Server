@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/sharespace?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/sharespace?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${DEV_DB_USERNAME}
     password: ${DEV_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -19,6 +19,11 @@ spring:
 kakao:
   url: https://dapi.kakao.com/v2/local/search/address.json?query=
   api-key: ${KAKAO_API_KEY}
+
+firebase:
+  configuration-file: ./serviceAccountKey.json
+  bucket: sharespace-server.appspot.com
+
 #  jpa:
 #    hibernate:
 #      ddl-auto: update
