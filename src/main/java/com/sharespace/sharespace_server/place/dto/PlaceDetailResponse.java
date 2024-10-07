@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.place.dto;
 
+import com.sharespace.sharespace_server.place.entity.Place;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,4 +18,16 @@ public class PlaceDetailResponse {
 	private Integer period;
 	private String imageUrl;
 	private String description;
+
+	// from 메서드 추가
+	public static PlaceDetailResponse from(Place place) {
+		return PlaceDetailResponse.builder()
+			.placeId(place.getId())
+			.title(place.getTitle())
+			.category(place.getCategory().toString()) // 카테고리가 객체라면 toString() 등 적절한 변환 필요
+			.period(place.getPeriod())
+			.imageUrl(place.getImageUrl())
+			.description(place.getDescription())
+			.build();
+	}
 }

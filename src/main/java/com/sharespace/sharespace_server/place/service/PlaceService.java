@@ -2,10 +2,14 @@ package com.sharespace.sharespace_server.place.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.firebase.cloud.StorageClient;
 import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
@@ -38,6 +42,7 @@ public class PlaceService {
 	private final PlaceRepository placeRepository;
 	private final ProductRepository productRepository;
 	private final LocationTransform locationTransform;
+	private final Bucket bucket;
 
 	/**
 	 * 주어진 장소 정보를 게스트 사용자와 함께 PlacesResponse 객체로 매핑합니다.
@@ -64,10 +69,22 @@ public class PlaceService {
 			.build();
 	}
 
+	// user 정보 찾기
+	private User findByUser(Long userId) {
+		return userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+	}
+
+	// 파일 다운로드 메서드 (다운로드 링크 반환)
+	public String getFileUrl(String fileName) {
+		String url = bucket.get("download.jpeg").signUrl(1, TimeUnit.HOURS).toString();
+
+		return url;
+	}
+
 	@Transactional
 	public BaseResponse<List<PlacesResponse>> getAllPlaces() {
-		User guest = userRepository.findById(2L)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		User guest = findByUser(2L);
 
 		List<PlacesResponse> placesResponseList = placeRepository.findAll().stream()
 			.map(place -> mapToPlacesResponse(place, guest))
@@ -78,8 +95,7 @@ public class PlaceService {
 
 	@Transactional
 	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(Long productId) {
-		User guest = userRepository.findById(2L)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		User guest = findByUser(2L);
 
 		Product product = productRepository.findById(productId)
 			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
@@ -97,26 +113,26 @@ public class PlaceService {
 	public BaseResponse<PlaceDetailResponse> getPlaceDetail(Long placeId) {
 		Place place = placeRepository.findById(placeId).orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 
-		PlaceDetailResponse placeDetailResponse = PlaceDetailResponse.builder()
-			.placeId(placeId)
-			.title(place.getTitle())
-			.period(place.getPeriod())
-			.imageUrl(place.getImageUrl())
-			.description(place.getDescription())
-			.build();
+		PlaceDetailResponse placeDetailResponse = PlaceDetailResponse.from(place);
 
 		return baseResponseService.getSuccessResponse(placeDetailResponse);
 	}
 
 	@Transactional
 	public BaseResponse<String> createPlace(PlaceRequest placeRequest) {
-		User user = userRepository.findById(1L)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		User user = findByUser(1L);
 
 		// request 항목 중 하나라도 빈 값이 들어온 경우 예외 처리
-		if(placeRequest.getTitle().isEmpty() || placeRequest.getPeriod() == null || placeRequest.getCategory() == null || placeRequest.getDescription().isEmpty()) {
+		if(placeRequest.getTitle().isEmpty() || placeRequest.getPeriod() == null
+			|| placeRequest.getCategory() == null || placeRequest.getDescription().isEmpty()) {
 			throw new CustomRuntimeException(PlaceException.PLACE_REQUIRED_FIELDS_EMPTY);
 		}
+
+		// 이미 User Id의 값으로 장소가 만들어져 있는 경우 예외 처리
+		placeRepository.findByUserId(user.getId())
+			.ifPresent(p -> {
+				throw new CustomRuntimeException(PlaceException.PLACE_ALREADY_EXISTS);
+			});
 
 		Place place = Place.builder()
 			.title(placeRequest.getTitle())
@@ -134,8 +150,14 @@ public class PlaceService {
 
 	@Transactional
 	public BaseResponse<String> updatePlace(PlaceUpdateRequest placeRequest) {
-		User user = userRepository.findById(1L)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		// request 항목 중 하나라도 빈 값이 들어온 경우 예외 처리
+		if(placeRequest.getTitle().isEmpty() || placeRequest.getPeriod() == null
+			|| placeRequest.getCategory() == null || placeRequest.getDescription().isEmpty()
+			|| placeRequest.getLocation().isEmpty()) {
+			throw new CustomRuntimeException(PlaceException.PLACE_REQUIRED_FIELDS_EMPTY);
+		}
+
+		User user = findByUser(1L);
 
 		Map<String, Double> coordinates = locationTransform.getCoordinates(placeRequest.getLocation());
 

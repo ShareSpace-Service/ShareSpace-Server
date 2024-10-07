@@ -116,7 +116,7 @@ public class NoteService {
 	@Transactional
 	public BaseResponse<String> deleteNote(Long noteId) {
 		// 쪽지 존재 여부 확인
-		if (noteRepository.existsById(noteId)) {
+		if (!noteRepository.existsById(noteId)) {
 			throw new CustomRuntimeException(NoteException.NOTE_NOT_FOUND);
 		}
 
