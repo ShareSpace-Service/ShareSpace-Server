@@ -31,9 +31,11 @@ import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.sharespace.sharespace_server.global.enums.Status.PENDING;
 import static com.sharespace.sharespace_server.global.enums.Status.STORED;
+import static com.sharespace.sharespace_server.global.utils.LocationTransform.*;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +46,6 @@ public class MatchingService {
 	private final ProductRepository productRepository;
 	private final PlaceRepository placeRepository;
 	private final UserRepository userRepository;
-
 
 	/**
 	 * MatchingKeepRequest 객체를 기반으로 Place와 Product를 매칭하여 Matching 엔티티를 생성하는 메서드
@@ -58,6 +59,7 @@ public class MatchingService {
 	 * @return BaseResponse<Void> - 성공 시 응답 객체 (데이터 없음)
 	 * @throws CustomRuntimeException - Place나 Product가 존재하지 않거나, 카테고리 불일치 또는 매칭 중복 시 발생
 	 */
+	@Transactional
 	public BaseResponse<Void> keep(MatchingKeepRequest request) {
 		// Place와 Product를 찾고, 유효성 검사
 		Place place = placeRepository.findById(request.getPlaceId())
@@ -75,14 +77,25 @@ public class MatchingService {
 			throw new CustomRuntimeException(MatchingException.ALREADY_EXISTED_MATCHING);
 		}
 
+		// 2024-10-07 : Period 에외처리, place의 period는 product의 period보다 커선 안 된다.
+		if (place.getPeriod() < product.getPeriod()) {
+			throw new CustomRuntimeException(MatchingException.INVALID_PRODUCT_PERIOD);
+		}
+
+		User host = place.getUser();
+		User guest = product.getUser();
+
+		// 두 Host와 Guest의 거리 계산
+		Integer distance = calculateDistance(guest.getLatitude(), guest.getLongitude(),
+			host.getLatitude(), host.getLongitude());
+
 		// Matching 엔티티 생성 후 필요한 값 설정
 		Matching matching = new Matching();
 		matching.setProduct(product);
 		matching.setPlace(place);
 		matching.setStatus(Status.REQUESTED);
 		matching.setStartDate(LocalDateTime.now());
-		matching.setDistance(2); //
-		// TODO : Product와 Place의 Distance 계산하여 컬럼에 추가해야함
+		matching.setDistance(distance);
 
 
 		// 2024-10-04 : Place의 isPlaced 컬럼을 true로 업데이트
@@ -105,6 +118,8 @@ public class MatchingService {
 	 * @return BaseResponse<MatchingShowKeepDetailResponse> - 매칭 상세 정보를 담은 응답 객체
 	 * @throws CustomRuntimeException - 주어진 matchingId에 해당하는 매칭을 찾을 수 없는 경우 예외 발생
 	 */
+
+	// FIXME : 매칭 Status에 대한 검증 로직이 필요할 것 같음
 	public BaseResponse<MatchingShowKeepDetailResponse> showKeepDetail(Long matchingId) {
 		Matching matching = findMatching(matchingId);
 
@@ -132,6 +147,7 @@ public class MatchingService {
 	 * @return BaseResponse<Void> - 성공 시 응답 객체 (데이터 없음)
 	 * @throws CustomRuntimeException - 유효하지 않은 매칭 ID이거나, 유저 권한 또는 상태가 일치하지 않는 경우 예외 발생
 	 */
+	@Transactional
 	public BaseResponse<Void> completeStorage(Long matchingId) {
 		// TODO : 알림 기능 추가하기
 		User user = userRepository.findById(1L) // TODO: 토큰에서 유저 정보 받아오는 것으로 변경 예정
@@ -156,6 +172,90 @@ public class MatchingService {
 		return baseResponseService.getSuccessResponse();
 	}
 
+
+
+	/**
+	 * 주어진 matchingId에 해당하는 매칭 상세 정보를 조회하는 메서드
+	 *
+	 * 1. Matching 엔티티를 조회하고,
+	 * 2. Product와 Place 정보를 DTO로 변환하여 응답
+	 *
+	 * @param matchingId - 조회할 매칭 엔티티의 ID
+	 * @return BaseResponse<MatchingShowRequestDetailResponse> - 매칭 상세 정보를 담은 응답 객체
+	 */
+
+	public BaseResponse<MatchingShowRequestDetailResponse> showRequestDetail(Long matchingId) {
+		Matching matching = findMatching(matchingId);
+
+		PlaceRequestedDetailResponse placeResponse = PlaceRequestedDetailResponse.of(matching.getPlace());
+		ProductRequestedDetailResponse productResponse = ProductRequestedDetailResponse.of(matching.getProduct());
+		MatchingShowRequestDetailResponse response = MatchingShowRequestDetailResponse.builder()
+			.placeRequestedDetailResponse(placeResponse)
+			.productRequestedDetailResponse(productResponse)
+			.build();
+
+
+		return baseResponseService.getSuccessResponse(response);
+	}
+
+	/**
+	 * 호스트가 매칭 요청을 수락 또는 거절하는 메서드
+	 *
+	 * @param request - 호스트가 매칭 요청을 수락/거절하는 요청 객체
+	 * @return BaseResponse<Void> - 성공 시 응답 객체
+	 */
+	@Transactional
+    public BaseResponse<Void> hostAcceptRequest(MatchingHostAcceptRequestRequest request) {
+		Matching matching = findMatching(request.getMatchingId());
+		if (request.isAccepted()) {
+			matching.setStatus(PENDING);
+		} else {
+			matching.setStatus(Status.REJECTED);
+		}
+		matchingRepository.save(matching);
+		return baseResponseService.getSuccessResponse();
+    }
+
+	/**
+	 * 게스트가 물품 보관을 확인처리 (보관 대기중 -> ㅂ고ㅘㄴ중)
+	 *
+	 * 1. 매칭의 상태가 PENDING인지 확인하고,
+	 * 2. PENDING 상태일 경우 물품 보관 상태로 변경
+	 *
+	 * @param request - 매칭 ID를 포함하는 요청 객체
+	 * @return BaseResponse<Void> - 성공 시 응답 객체
+	 * @throws CustomRuntimeException - 매칭 상태가 PENDING이 아니거나 유효하지 않은 경우 발생
+	 */
+	@Transactional
+	public BaseResponse<Void> guestConfirmStorage(MatchingGuestConfirmStorageRequest request) {
+		Matching matching = findMatching(request.getMatchingId());
+
+		// 예외처리 1. Matching의 Status가 PENDING(보관 대기중)이어야 올바른 응답을 반환해야함
+		if (!matching.getStatus().equals(PENDING)) {
+			throw new CustomRuntimeException(MatchingException.INCORRECT_STATUS_CONFIRM_REQUEST_GUEST);
+		}
+
+		// NOTE : Matching의 ImageUrl이 null일 때 예외처리를 해줘야할까?
+
+		matching.setStatus(STORED);
+		matchingRepository.save(matching);
+
+		return baseResponseService.getSuccessResponse();
+	}
+
+
+	/**
+	 * 주어진 매칭 ID에 해당하는 매칭 엔티티를 조회하는 메서드
+	 *
+	 * @param matchingId - 조회할 매칭 엔티티의 ID
+	 * @return Matching - 매칭 엔티티
+	 * @throws CustomRuntimeException - 매칭 ID가 유효하지 않은 경우 예외 발생
+	 */
+	public Matching findMatching(Long matchingId) {
+        return matchingRepository.findById(matchingId)
+				.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+	}
+
 	private void validateGuest(Matching matching, User user) {
 		// 게스트가 물건을 가지고 있는지 확인
 		if (!matching.getProduct().getUser().equals(user)) {
@@ -176,51 +276,5 @@ public class MatchingService {
 		if (matching.isHostCompleted()) {
 			throw new CustomRuntimeException(MatchingException.HOST_ALREADY_COMPLETED_KEEPING);
 		}
-	}
-
-	public BaseResponse<MatchingShowRequestDetailResponse> showRequestDetail(Long matchingId) {
-		Matching matching = findMatching(matchingId);
-
-		PlaceRequestedDetailResponse placeResponse = PlaceRequestedDetailResponse.of(matching.getPlace());
-		ProductRequestedDetailResponse productResponse = ProductRequestedDetailResponse.of(matching.getProduct());
-		MatchingShowRequestDetailResponse response = MatchingShowRequestDetailResponse.builder()
-			.placeRequestedDetailResponse(placeResponse)
-			.productRequestedDetailResponse(productResponse)
-			.build();
-
-
-		return baseResponseService.getSuccessResponse(response);
-	}
-
-    public BaseResponse<Void> hostAcceptRequest(MatchingHostAcceptRequestRequest request) {
-		Matching matching = findMatching(request.getMatchingId());
-		if (request.isAccepted()) {
-			matching.setStatus(PENDING);
-		} else {
-			matching.setStatus(Status.REJECTED);
-		}
-		matchingRepository.save(matching);
-		return baseResponseService.getSuccessResponse();
-    }
-
-	public BaseResponse<Void> guestConfirmStorage(MatchingGuestConfirmStorageRequest request) {
-		Matching matching = findMatching(request.getMatchingId());
-
-		// 예외처리 1. Matching의 Status가 PENDING(보관 대기중)이어야 올바른 응답을 반환해야함
-		if (!matching.getStatus().equals(PENDING)) {
-			throw new CustomRuntimeException(MatchingException.INCORRECT_STATUS_CONFIRM_REQUEST_GUEST);
-		}
-
-		// NOTE : Matching의 ImageUrl이 null일 때 예외처리를 해줘야할까?
-
-		matching.setStatus(STORED);
-		matchingRepository.save(matching);
-
-		return baseResponseService.getSuccessResponse();
-	}
-
-	public Matching findMatching(Long matchingId) {
-        return matchingRepository.findById(matchingId)
-				.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
 	}
 }

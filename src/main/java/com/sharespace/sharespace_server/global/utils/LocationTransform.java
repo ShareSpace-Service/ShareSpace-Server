@@ -83,7 +83,7 @@ public class LocationTransform {
      * @param lon2 Host Longitude(경도)
      * @return 거리를 계산 후 정수의 값으로 반올림한 값
      */
-    public Integer calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    public static Integer calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
 
