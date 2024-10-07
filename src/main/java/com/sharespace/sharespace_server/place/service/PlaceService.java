@@ -2,14 +2,10 @@ package com.sharespace.sharespace_server.place.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.Bucket;
-import com.google.firebase.cloud.StorageClient;
 import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
@@ -42,7 +38,6 @@ public class PlaceService {
 	private final PlaceRepository placeRepository;
 	private final ProductRepository productRepository;
 	private final LocationTransform locationTransform;
-	private final Bucket bucket;
 
 	/**
 	 * 주어진 장소 정보를 게스트 사용자와 함께 PlacesResponse 객체로 매핑합니다.
@@ -73,13 +68,6 @@ public class PlaceService {
 	private User findByUser(Long userId) {
 		return userRepository.findById(userId)
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
-	}
-
-	// 파일 다운로드 메서드 (다운로드 링크 반환)
-	public String getFileUrl(String fileName) {
-		String url = bucket.get("download.jpeg").signUrl(1, TimeUnit.HOURS).toString();
-
-		return url;
 	}
 
 	@Transactional
