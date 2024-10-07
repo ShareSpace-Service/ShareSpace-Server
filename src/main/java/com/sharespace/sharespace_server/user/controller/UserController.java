@@ -3,6 +3,7 @@ package com.sharespace.sharespace_server.user.controller;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
+import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,5 +23,10 @@ public class UserController {
     @PostMapping("/validate")
     public BaseResponse<Void> emailValidate(@Valid @RequestBody UserEmailValidateRequest request) {
         return userService.emailValidate(request);
+    }
+
+    @PutMapping("/update")
+    public BaseResponse<Void> update(@Valid @RequestBody UserUpdateRequest request) {
+        return userService.update(request);
     }
 }
