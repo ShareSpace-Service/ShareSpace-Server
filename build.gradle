@@ -63,6 +63,9 @@ dependencies {
 
 	// ANTLR 의존성 추가
 	implementation 'org.antlr:antlr4-runtime:4.9.3'
+
+	// firebase
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
 }
 
 tasks.named('test') {
