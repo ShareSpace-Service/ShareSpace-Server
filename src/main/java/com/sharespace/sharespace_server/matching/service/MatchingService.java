@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static com.sharespace.sharespace_server.global.enums.Status.PENDING;
 import static com.sharespace.sharespace_server.global.enums.Status.STORED;
+import static com.sharespace.sharespace_server.global.utils.LocationTransform.*;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +46,6 @@ public class MatchingService {
 	private final ProductRepository productRepository;
 	private final PlaceRepository placeRepository;
 	private final UserRepository userRepository;
-
 
 	/**
 	 * MatchingKeepRequest 객체를 기반으로 Place와 Product를 매칭하여 Matching 엔티티를 생성하는 메서드
@@ -77,14 +77,25 @@ public class MatchingService {
 			throw new CustomRuntimeException(MatchingException.ALREADY_EXISTED_MATCHING);
 		}
 
+		// 2024-10-07 : Period 에외처리, place의 period는 product의 period보다 커선 안 된다.
+		if (place.getPeriod() < product.getPeriod()) {
+			throw new CustomRuntimeException(MatchingException.INVALID_PRODUCT_PERIOD);
+		}
+
+		User host = place.getUser();
+		User guest = product.getUser();
+
+		// 두 Host와 Guest의 거리 계산
+		Integer distance = calculateDistance(guest.getLatitude(), guest.getLongitude(),
+			host.getLatitude(), host.getLongitude());
+
 		// Matching 엔티티 생성 후 필요한 값 설정
 		Matching matching = new Matching();
 		matching.setProduct(product);
 		matching.setPlace(place);
 		matching.setStatus(Status.REQUESTED);
 		matching.setStartDate(LocalDateTime.now());
-		matching.setDistance(2); //
-		// TODO : Product와 Place의 Distance 계산하여 컬럼에 추가해야함
+		matching.setDistance(distance);
 
 
 		// 2024-10-04 : Place의 isPlaced 컬럼을 true로 업데이트
