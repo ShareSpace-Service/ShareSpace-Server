@@ -40,3 +40,6 @@ out/
 ._.DS_Store
 **/.DS_Store
 **/._.DS_Store
+
+### Key ###
+src/main/resources/serviceAccountKey.json
