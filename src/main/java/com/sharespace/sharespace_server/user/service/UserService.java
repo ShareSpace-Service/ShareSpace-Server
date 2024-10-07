@@ -16,6 +16,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ public class UserService {
     private final JavaMailSender javaMailSender;
     private final Map<String, Integer> verificationCodes = new ConcurrentHashMap<>();
 
+    @Transactional
     public BaseResponse<Long> register(UserRegisterRequest request) {
 
         // 이메일 중복 검사 메소드 호출
