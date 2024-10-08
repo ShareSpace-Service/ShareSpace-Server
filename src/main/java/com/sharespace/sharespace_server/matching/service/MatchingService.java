@@ -19,7 +19,7 @@ import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDe
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
-import com.sharespace.sharespace_server.place.dto.MatchingPlaceResponse;
+import com.sharespace.sharespace_server.place.dto.MatchingPlaceDto;
 import com.sharespace.sharespace_server.place.dto.PlaceRequestedDetailResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
@@ -124,12 +124,12 @@ public class MatchingService {
 		Matching matching = findMatching(matchingId);
 
 		MatchingProductDto matchingProductDto = MatchingProductDto.from(matching.getProduct());
-		MatchingPlaceResponse matchingPlaceResponse = MatchingPlaceResponse.from(matching.getPlace());
+		MatchingPlaceDto matchingPlaceDto = MatchingPlaceDto.from(matching.getPlace());
 
 		// matching의 상태가 '보관중', '보관 대기중'일 경우, 이 response 반환
 		MatchingShowKeepDetailResponse response = MatchingShowKeepDetailResponse.builder()
 			.product(matchingProductDto)
-			.place(matchingPlaceResponse)
+			.place(matchingPlaceDto)
 			.imageUrl(matching.getImage())
 			.build();
 
@@ -243,6 +243,33 @@ public class MatchingService {
 		return baseResponseService.getSuccessResponse();
 	}
 
+	public BaseResponse<Void> cancelRequest(Long matchingId) {
+		User user = userRepository.findById(1L)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
+
+		Matching matching = findMatching(matchingId);
+
+		if (!matching.getStatus().equals(PENDING)) {
+			throw new CustomRuntimeException(MatchingException.REQUEST_CANCELLATION_NOT_ALLOWED);
+		}
+		Product product = matching.getProduct();
+		// 요청 취소시, 해당 product의 is_placed 컬럼을 false로 업데이트한다.
+		product.setIsPlaced(false);
+
+		// GUEST가 요청 취소를 눌렀을 때의 플로우
+		if (user.getRole().getValue().equals("ROLE_GUEST")) {
+			matching.setStatus(Status.UNASSIGNED); // Matching의 상태를 미배정 상태로 변경
+		}
+
+		// HOST가 요청 취소를 눌렀을 때의 플로우
+		if (user.getRole().getValue().equals("ROLE_HOST")) {
+			matching.setStatus(Status.REJECTED); // Matching의 상태를 반려됨으로 변경
+		}
+
+		// TODO : 취소 당한 상대에게 알림이 전송되어야 함
+		return baseResponseService.getSuccessResponse();
+	}
 
 	/**
 	 * 주어진 매칭 ID에 해당하는 매칭 엔티티를 조회하는 메서드
@@ -277,4 +304,6 @@ public class MatchingService {
 			throw new CustomRuntimeException(MatchingException.HOST_ALREADY_COMPLETED_KEEPING);
 		}
 	}
+
+
 }

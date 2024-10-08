@@ -53,9 +53,14 @@ public class MatchingController {
 	}
 
 	@PutMapping("/confirmStorage/guest")
-	public BaseResponse<Void> guestConfirmStorage(@RequestBody MatchingGuestConfirmStorageRequest request) {
+	public BaseResponse<Void> guestConfirmStorage(@Valid @RequestBody MatchingGuestConfirmStorageRequest request) {
 		return matchingService.guestConfirmStorage(request);
 
+	}
+
+	@PostMapping("/cancelRequest")
+	public BaseResponse<Void> cancelRequest(@RequestParam("matchingId") Long matchingId) {
+		return matchingService.cancelRequest(matchingId);
 	}
 }
 
