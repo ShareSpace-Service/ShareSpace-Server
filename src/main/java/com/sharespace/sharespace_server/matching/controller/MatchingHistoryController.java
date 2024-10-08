@@ -25,7 +25,7 @@ public class MatchingHistoryController {
 		return matchingHistoryService.getHistory();
 	}
 
-	@GetMapping
+	@GetMapping("/detail")
 	public BaseResponse<MatchingShowKeepDetailResponse> getHistoryDetail(@RequestParam("matchingId") Long matchingId) {
 		return matchingHistoryService.getHistoryDetail(matchingId);
 	}
