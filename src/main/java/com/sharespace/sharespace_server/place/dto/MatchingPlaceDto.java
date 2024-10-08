@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class MatchingPlaceResponse {
+public class MatchingPlaceDto {
 	/*
 	* MatchingShowKeepDetailResponse에 사용되는 Dto
 	* Composition 사용
@@ -15,8 +15,8 @@ public class MatchingPlaceResponse {
 
 	String title;
 
-	public static MatchingPlaceResponse from(Place place) {
-		return MatchingPlaceResponse.builder()
+	public static MatchingPlaceDto from(Place place) {
+		return MatchingPlaceDto.builder()
 			.title(place.getTitle())
 			.build();
 	}
