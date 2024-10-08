@@ -1,5 +1,9 @@
 package com.sharespace.sharespace_server.place.service;
 
+import static com.sharespace.sharespace_server.global.utils.LocationTransform.*;
+import static com.sharespace.sharespace_server.global.utils.S3ImageUpload.*;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,15 +55,18 @@ public class PlaceService {
 		User host = userRepository.findById(place.getUser().getId())
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
-		Integer distance = locationTransform.calculateDistance(
+		Integer distance = calculateDistance(
 			guest.getLatitude(), guest.getLongitude(), host.getLatitude(), host.getLongitude()
 		);
+
+		// imageUrl 필드를 다중 이미지 배열로 변환
+		List<String> imageUrls = Arrays.asList(place.getImageUrl().split(","));
 
 		return PlacesResponse.builder()
 			.placeId(place.getId())
 			.title(place.getTitle())
 			.category(place.getCategory())
-			.imageUrl(place.getImageUrl())
+			.imageUrls(imageUrls) // 다중 이미지 URL 배열 설정
 			.distance(distance)
 			.build();
 	}
@@ -122,13 +129,16 @@ public class PlaceService {
 				throw new CustomRuntimeException(PlaceException.PLACE_ALREADY_EXISTS);
 			});
 
+		// 다중 이미지 S3에 업로드
+		String combinedImageUrls = uploadMultipleFiles(placeRequest.getImageUrl(), "place/" +user.getId());
+
 		Place place = Place.builder()
 			.title(placeRequest.getTitle())
 			.user(user)
 			.period(placeRequest.getPeriod())
 			.description(placeRequest.getDescription())
 			.category(placeRequest.getCategory())
-			.imageUrl(placeRequest.getImage_url())
+			.imageUrl(combinedImageUrls)
 			.build();
 
 		placeRepository.save(place);
