@@ -3,6 +3,7 @@ package com.sharespace.sharespace_server.place.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,7 +48,7 @@ public class PlaceController {
 
 	// task: 장소 등록
 	@PostMapping
-	public BaseResponse<String> registerPlace(@RequestBody PlaceRequest placeRequest) {
+	public BaseResponse<String> registerPlace(@ModelAttribute PlaceRequest placeRequest) {
 		return placeService.createPlace(placeRequest);
 	}
 
