@@ -20,9 +20,18 @@ kakao:
   url: https://dapi.kakao.com/v2/local/search/address.json?query=
   api-key: ${KAKAO_API_KEY}
 
-firebase:
-  configuration-file: ./serviceAccountKey.json
-  bucket: sharespace-server.appspot.com
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    stack.auto: false
+    s3:
+      bucket: sharespace-images-bucket
+    region:
+      static: ${AWS_REGION}
+    stack:
+      auto: false
 
 #  jpa:
 #    hibernate:
