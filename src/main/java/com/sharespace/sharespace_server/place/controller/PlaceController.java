@@ -54,7 +54,7 @@ public class PlaceController {
 
 	// task: 장소 수정
 	@PutMapping
-	public BaseResponse<String> updatePlace(@RequestBody PlaceUpdateRequest placeRequest) {
+	public BaseResponse<String> updatePlace(@ModelAttribute PlaceUpdateRequest placeRequest) {
 		return placeService.updatePlace(placeRequest);
 	}
 }
