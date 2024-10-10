@@ -27,7 +27,7 @@ cloud:
       secret-key: ${AWS_SECRET_KEY}
     stack.auto: false
     s3:
-      bucket: sharespace-images-bucket
+      bucket: ${BUCKET_NAME}
     region:
       static: ${AWS_REGION}
     stack:
