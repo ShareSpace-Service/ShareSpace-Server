@@ -1,10 +1,18 @@
 package com.sharespace.sharespace_server.notification.service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
+import com.sharespace.sharespace_server.global.exception.error.UserException;
+import com.sharespace.sharespace_server.notification.entity.Notification;
+import com.sharespace.sharespace_server.notification.repository.NotificationRepository;
+import com.sharespace.sharespace_server.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 
 	private final ConcurrentHashMap<Long, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
+	private final UserRepository userRepository;
+	private final NotificationRepository notificationRepository;
 	public SseEmitter subscribe(Long userId) {
 		SseEmitter emitter = new SseEmitter();
 		// 기본적으로 연결 유지
@@ -28,8 +38,15 @@ public class NotificationService {
 		return emitter;
 	}
 
-
+	@Transactional
 	public void sendNotification(Long userId, String message)  {
+		Notification notification = new Notification();
+		notification.setUser(userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND)));
+		notification.setMessage(message);
+		notification.setCreatedAt(LocalDateTime.now());
+		notification.setRead(false);
+		notificationRepository.save(notification);
 		SseEmitter emitter = sseEmitters.get(userId);
 		if (emitter != null) {
 			try {
@@ -39,5 +56,11 @@ public class NotificationService {
 				sseEmitters.remove(userId);
 			}
 		}
+	}
+	
+	// 메시지 알림 처리
+	public void newMessage(Long userId, String messageContent) {
+		String notificationMessage = "새로운 메시지가 도착했습니다: " + messageContent;
+		sendNotification(userId, notificationMessage);
 	}
 }
