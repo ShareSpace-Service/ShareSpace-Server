@@ -112,16 +112,7 @@ public class S3ImageUpload {
 		metadata.setContentLength(multipartFile.getSize());
 
 		// S3 Bucket에 업로드
-		try {
-			// S3에 파일 업로드
-			amazonS3.putObject(
-				new PutObjectRequest(bucketName, fileName, multipartFile.getInputStream(), metadata)
-					.withCannedAcl(CannedAccessControlList.PublicRead)); // Public 권한 부여
-			multipartFile.getInputStream().close();
-		} catch (IOException e) {
-			log.error("Image Upload error: {}", e.getMessage());
-			throw new CustomRuntimeException(ImageException.IMAGE_UPLOAD_FAIL);
-		}
+		putS3(fileName, multipartFile, metadata);
 
 		// 업로드된 파일의 URL 반환
 		return amazonS3.getUrl(bucketName, fileName).toString();
@@ -225,6 +216,22 @@ public class S3ImageUpload {
 	 */
 	public boolean hasValidImages(List<MultipartFile> files) {
 		return files != null && !files.isEmpty() && files.stream().allMatch(file -> file != null && !file.isEmpty());
+	}
+
+	// TODO: 단일 이미지 수정 추가 (profile 수정)
+
+	// task: 주어진 파일을 S3 버킷에 업로드하는 메서드
+	private void putS3(String fileName, MultipartFile multipartFile, ObjectMetadata metadata) {
+		try {
+			// S3에 파일 업로드
+			amazonS3.putObject(
+				new PutObjectRequest(bucketName, fileName, multipartFile.getInputStream(), metadata)
+					.withCannedAcl(CannedAccessControlList.PublicRead)); // Public 권한 부여
+			multipartFile.getInputStream().close();
+		} catch (IOException e) {
+			log.error("Image Upload error: {}", e.getMessage());
+			throw new CustomRuntimeException(ImageException.IMAGE_UPLOAD_FAIL);
+		}
 	}
 
 	// task: 한개의 이미지 삭제
