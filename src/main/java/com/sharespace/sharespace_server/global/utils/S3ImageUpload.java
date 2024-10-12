@@ -56,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class S3ImageUpload {
 
-	private AmazonS3 amazonS3;
+	private final AmazonS3 amazonS3;
 
 	public S3ImageUpload(AmazonS3 amazonS3) {
 		this.amazonS3 = amazonS3;
@@ -164,7 +164,7 @@ public class S3ImageUpload {
 	}
 
 	/**
-	 * <p>이미지 수정 메서드</p>
+	 * <p>다중 이미지 수정 메서드</p>
 	 *
 	 * <p>이 메서드는 기존 이미지의 일부를 삭제하고, 새로운 이미지를 업로드한 후
 	 * 최종적으로 업데이트된 이미지 URL 리스트 반환.</p>
@@ -207,6 +207,31 @@ public class S3ImageUpload {
 		return uploadedUrls;
 	}
 
+
+	/**
+	 * <p>기존 단일 이미지를 S3에서 삭제하고 새로운 이미지를 업로드하는 메서드.</p>
+	 *
+	 * <p>이 메서드는 주어진 기존 이미지 URL을 사용하여 이미지를 S3에서 삭제한 후, 새로 업로드된 이미지를 S3에 저장하고
+	 * 해당 이미지의 S3 URL을 반환합니다.</p>
+	 *
+	 * <p>처리 과정:</p>
+	 * <ul>
+	 *     <li>기존 이미지 URL을 기반으로 S3에서 이미지를 삭제합니다.</li>
+	 *     <li>새로운 이미지를 주어진 디렉토리에 업로드하고 해당 이미지의 S3 URL을 반환합니다.</li>
+	 * </ul>
+	 *
+	 * @param deleteImageUrl 삭제할 기존 이미지의 S3 URL (String 타입)
+	 * @param newImageUrl 업로드할 새로운 이미지 파일 (MultipartFile 타입)
+	 * @param dirName S3에 저장될 이미지 폴더 경로 (예: "profile", "images/uploads/")
+	 * @return 업로드된 파일의 S3 URL을 반환합니다.
+	 *
+	 * @Author thereisname
+	 */
+	public String updateImage(String deleteImageUrl, MultipartFile newImageUrl, String dirName) {
+		removeImageFromS3(deleteImageUrl);
+		return uploadSingleImage(newImageUrl, dirName);
+	}
+
 	/**
 	 * 이미지 파일 리스트에서 null 값이나 비어있는 파일이 있는지 확인합니다.
 	 *
@@ -217,8 +242,6 @@ public class S3ImageUpload {
 	public boolean hasValidImages(List<MultipartFile> files) {
 		return files != null && !files.isEmpty() && files.stream().allMatch(file -> file != null && !file.isEmpty());
 	}
-
-	// TODO: 단일 이미지 수정 추가 (profile 수정)
 
 	// task: 주어진 파일을 S3 버킷에 업로드하는 메서드
 	private void putS3(String fileName, MultipartFile multipartFile, ObjectMetadata metadata) {
