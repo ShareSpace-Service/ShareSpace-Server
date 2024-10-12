@@ -20,6 +20,38 @@ import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * <p>S3 이미지 업로드 관리 클래스</p>
+ *
+ * <p>이 클래스는 AWS S3를 사용하여 단일 또는 다중 이미지 파일을 업로드, 수정, 삭제하는 기능을 제공합니다.
+ * 파일을 S3에 업로드할 때 고유한 파일명을 사용하며, Public 읽기 권한을 설정하여 URL을 통해 접근할 수 있도록 합니다.</p>
+ *
+ * <p>기능:</p>
+ * <ul>
+ *     <li>단일 이미지 파일 업로드</li>
+ *     <li>다중 이미지 파일 업로드</li>
+ *     <li>이미지 수정 (삭제 및 업로드)</li>
+ *     <li>이미지 삭제</li>
+ * </ul>
+ *
+ * <p><b>사용 예시:</b></p>
+ * <pre>{@code
+ * // S3ImageUpload 객체 주입 받기
+ * private S3ImageUpload s3ImageUpload;
+ *
+ * // 이미지 업로드 예시
+ * MultipartFile imageFile = placeRequest.getImageUrl();
+ * String imageUrl = s3ImageUpload.uploadFile(imageFile, "profile");
+ * }</pre>
+ *
+ * <p>주의사항:</p>
+ * <ul>
+ *     <li>업로드할 파일의 확장자는 반드시 허용된 확장자여야 합니다 (png, jpeg, jpg).</li>
+ *     <li>이미지 삭제 시 파일 URL이 유효하지 않으면 예외가 발생할 수 있습니다.</li>
+ * </ul>
+ *
+ * @Author thereisname
+ */
 @Component
 @Slf4j
 public class S3ImageUpload {
@@ -45,7 +77,7 @@ public class S3ImageUpload {
 	 * <pre>{@code
 	 * // 예시 사용법
 	 * MultipartFile imageFile = placeRequest.getImageUrl();
-	 * String imageUrl = uploadFile(imageFile, "profile"); // "profile" 디렉토리에 이미지 업로드
+	 * String imageUrl = s3ImageUpload.uploadFile(imageFile, "profile"); // "profile" 디렉토리에 이미지 업로드
 	 * }</pre>
 	 *
 	 * <p>업로드 프로세스:
@@ -63,6 +95,7 @@ public class S3ImageUpload {
 	 * @param multipartFile 업로드할 이미지 파일 (`MultipartFile` 타입)
 	 * @param dirName S3에 저장될 이미지 폴더 경로 (예: "profile", "images/uploads/")
 	 * @return 업로드된 파일의 S3 경로 (예: "profile/uuid_filename.jpg")
+	 * @throws CustomRuntimeException 이미지 업로드 실패
 	 * @Author thereisname
 	 */
 	public String uploadSingleImage(MultipartFile multipartFile, String dirName) {
@@ -102,7 +135,7 @@ public class S3ImageUpload {
 	 *
 	 * <pre>{@code
 	 * // 예시 사용법 (이미지를 place/{userId} 폴더 내 저장)
-	 * String combinedImagePaths = uploadMultipleFiles(
+	 * String combinedImagePaths = s3ImageUpload.uploadMultipleFiles(
 	 * 		placeRequest.getImageUrl(), "place/" + user.getId()
 	 * );
 	 * }</pre>
@@ -123,7 +156,7 @@ public class S3ImageUpload {
 	 *
 	 * @param multipartFiles 업로드할 이미지 파일들의 리스트. (비어 있거나 null인 경우 빈 문자열을 반환)
 	 * @param dirName S3에 저장될 이미지 폴더 경로 (예: "profile/", "places/3/")
-	 * @return 업로드된 이미지의 S3 경로(파일명)를 콤마로 구분한 문자열로 반환 (예: "file1,file2,file3")
+	 * @return 업로드된 이미지의 S3 경로(파일명)를 List<String> 타입으로 반환 (예: ["file1","file2","file3"])
 	 * @Author thereisname
 	 */
 	public List<String> uploadImages(List<MultipartFile> multipartFiles, String dirName) {
@@ -143,11 +176,19 @@ public class S3ImageUpload {
 	 * <p>이미지 수정 메서드</p>
 	 *
 	 * <p>이 메서드는 기존 이미지의 일부를 삭제하고, 새로운 이미지를 업로드한 후
-	 * 최종적으로 업데이트된 이미지 URL 리스트를 반환합니다.</p>
+	 * 최종적으로 업데이트된 이미지 URL 리스트 반환.</p>
+	 *
+	 * <pre>{@code
+	 * // 예시 사용법 (place/{userId} 폴더 내 이미지 삭제 및 업로드)
+	 * List<String> updateImages = s3ImageUpload.updateImages(
+	 * 			deleteImageUrl, newImageUrl,
+	 * 			"place/" + user.getId(), existingImageUrl
+	 * );
+	 * }</pre>
 	 *
 	 * @param deleteImageUrls 삭제할 이미지의 URL 목록. (S3에서 삭제할 이미지 URL들)
 	 * @param newImageUrl 업로드할 새로운 이미지 파일들의 리스트. (MultipartFile 타입)
-	 * @param dirName S3에 저장할 디렉토리 이름. (예: "profile/", "places/")
+	 * @param dirName S3에 저장할 디렉토리 이름. (예: "profile/", "places/{userId}")
 	 * @param existingImageUrl 기존에 저장된 이미지 URL. (삭제 후 유지될 이미지 URL)
 	 * @return 최종적으로 유지되거나 새로 추가된 이미지들의 URL 리스트.
 	 *         S3에서 삭제한 URL을 제거하고, 새로 업로드한 URL을 추가한 리스트를 반환.
@@ -176,13 +217,10 @@ public class S3ImageUpload {
 	}
 
 	/**
-	 * 주어진 이미지 파일 리스트에서 비어있는 파일이 있는지 확인합니다.
+	 * 이미지 파일 리스트에서 null 값이나 비어있는 파일이 있는지 확인합니다.
 	 *
 	 * @param files 업로드할 이미지 파일 리스트 (MultipartFile 타입)
-	 *              파일 리스트에 포함된 각 파일이 비어있는지 여부를 검사합니다.
-	 *
-	 * @return 파일 리스트에 비어있는 파일이 하나도 없으면 true,
-	 *         비어있는 파일이 하나라도 있으면 false를 반환합니다.
+	 * @return 모든 파일이 유효한 경우 true, null 값 또는 비어있는 파일이 하나라도 있으면 false 반환
 	 * @Author thereisname
 	 */
 	public boolean hasValidImages(List<MultipartFile> files) {
