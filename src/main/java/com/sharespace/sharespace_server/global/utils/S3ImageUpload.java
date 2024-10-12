@@ -65,11 +65,11 @@ public class S3ImageUpload {
 	 * @return 업로드된 파일의 S3 경로 (예: "profile/uuid_filename.jpg")
 	 * @Author thereisname
 	 */
-	public String uploadFile(MultipartFile multipartFile, String dirName) {
+	public String uploadSingleImage(MultipartFile multipartFile, String dirName) {
 		// 파일 확잠자 가져오기
-		String extension = getFileExtension(multipartFile.getOriginalFilename());
+		String extension = extractFileExtension(multipartFile.getOriginalFilename());
 		// 파일 확장자 검증
-		validateFileExtension(extension);
+		isAllowedFileExtension(extension);
 		// 파일명을 UUID로 고유하게 설정
 		String fileName = dirName + "/" + UUID.randomUUID() + "." + extension;
 
@@ -126,13 +126,13 @@ public class S3ImageUpload {
 	 * @return 업로드된 이미지의 S3 경로(파일명)를 콤마로 구분한 문자열로 반환 (예: "file1,file2,file3")
 	 * @Author thereisname
 	 */
-	public List<String> uploadMultipleFiles(List<MultipartFile> multipartFiles, String dirName) {
+	public List<String> uploadImages(List<MultipartFile> multipartFiles, String dirName) {
 		List<String> uploadedUrls = new ArrayList<>();
 
-		multipartFiles.forEach(url -> uploadedUrls.add(uploadFile(url, dirName)));
+		multipartFiles.forEach(url -> uploadedUrls.add(uploadSingleImage(url, dirName)));
 
 		for (MultipartFile file : multipartFiles) {
-			String fileName = uploadFile(file, dirName);
+			String fileName = uploadSingleImage(file, dirName);
 			uploadedUrls.add(fileName);
 		}
 
@@ -153,21 +153,21 @@ public class S3ImageUpload {
 	 *         S3에서 삭제한 URL을 제거하고, 새로 업로드한 URL을 추가한 리스트를 반환.
 	 * @Author thereisname
 	 */
-	public List<String> updateImages(List<String> deleteImageUrls, List<MultipartFile> newImageUrl, String dirName, String existingImageUrl) {
+	public List<String> updateImageSet(List<String> deleteImageUrls, List<MultipartFile> newImageUrl, String dirName, String existingImageUrl) {
 		// 기존 이미지 URL을 리스트에 추가
 		List<String> uploadedUrls = new ArrayList<>(List.of(existingImageUrl));
 
 		// S3에서 이미지 삭제
 		if (!deleteImageUrls.isEmpty()) {
-			deleteImageUrls.forEach(this::deleteImage);
+			deleteImageUrls.forEach(this::removeImageFromS3);
 			// 삭제된 URL을 목록에서 제거
 			uploadedUrls.removeAll(deleteImageUrls);
 		}
 
 		// 새로운 이미지가 있으면 S3에 업로드
-		if (isRequestImages(newImageUrl)) {
+		if (hasValidImages(newImageUrl)) {
 			// 새로운 이미지 파일을 S3에 업로드하고, URL을 리스트에 추가
-			List<String> url = uploadMultipleFiles(newImageUrl, dirName);
+			List<String> url = uploadImages(newImageUrl, dirName);
 			uploadedUrls.addAll(url);
 		}
 
@@ -185,12 +185,12 @@ public class S3ImageUpload {
 	 *         비어있는 파일이 하나라도 있으면 false를 반환합니다.
 	 * @Author thereisname
 	 */
-	public boolean isRequestImages(List<MultipartFile> files) {
-		return files.stream().noneMatch(MultipartFile::isEmpty);
+	public boolean hasValidImages(List<MultipartFile> files) {
+		return files != null && !files.isEmpty() && files.stream().allMatch(file -> file != null && !file.isEmpty());
 	}
 
 	// task: 한개의 이미지 삭제
-	private void deleteImage(String fileUrl) {
+	private void removeImageFromS3(String fileUrl) {
 		try {
 			amazonS3.deleteObject(
 				bucketName, fileUrl.substring(fileUrl.indexOf(".com") + 5)
@@ -202,7 +202,7 @@ public class S3ImageUpload {
 	}
 
 	// task: file 확장자 가져오기
-	private String getFileExtension(String fileName) {
+	private String extractFileExtension(String fileName) {
 		// 파일 이름이 null이거나 확장자가 없는 경우 처리
 		if (fileName != null && fileName.contains(".")) {
 			// 마지막 점(.) 이후의 문자열을 확장자로 반환
@@ -213,7 +213,7 @@ public class S3ImageUpload {
 	}
 
 	// task: file 확장자 검증
-	private void validateFileExtension(String extension) {
+	private void isAllowedFileExtension(String extension) {
 		List<String> allowedExtensions = Arrays.asList("png", "jpeg", "jpg");
 
 		// 확장자가 허용된 리스트에 있는지 검사
