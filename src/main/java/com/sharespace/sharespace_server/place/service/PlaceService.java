@@ -93,12 +93,12 @@ public class PlaceService {
 			});
 
 		// 이미지 Request 검증
-		if (!s3ImageUpload.isRequestImages(placeRequest.getImageUrl())) {
+		if (!s3ImageUpload.hasValidImages(placeRequest.getImageUrl())) {
 			throw new CustomRuntimeException(ImageException.IMAGE_REQUIRED_FIELDS_EMPTY);
 		};
 
 		// 다중 이미지 S3에 업로드
-		List<String> combinedImageUrls = s3ImageUpload.uploadMultipleFiles(placeRequest.getImageUrl(), "place/" +user.getId());
+		List<String> combinedImageUrls = s3ImageUpload.uploadImages(placeRequest.getImageUrl(), "place/" +user.getId());
 
 		Place place = Place.builder()
 			.title(placeRequest.getTitle())
@@ -121,7 +121,7 @@ public class PlaceService {
 		Place place = placeRepository.findByUserId(user.getId())
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 
-		List<String> updateImages = s3ImageUpload.updateImages(
+		List<String> updateImages = s3ImageUpload.updateImageSet(
 			placeRequest.getDeleteImageUrl(), placeRequest.getNewImageUrl(),
 			"place/" + user.getId(), place.getImageUrl());
 
