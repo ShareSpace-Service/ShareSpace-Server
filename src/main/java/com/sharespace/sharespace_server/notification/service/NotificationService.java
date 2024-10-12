@@ -1,10 +1,26 @@
 package com.sharespace.sharespace_server.notification.service;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.sharespace.sharespace_server.global.exception.error.NotificationException;
+import com.sharespace.sharespace_server.global.response.BaseResponse;
+import com.sharespace.sharespace_server.global.response.BaseResponseService;
+import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
+import com.sharespace.sharespace_server.user.entity.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
+import com.sharespace.sharespace_server.global.exception.error.UserException;
+import com.sharespace.sharespace_server.notification.entity.Notification;
+import com.sharespace.sharespace_server.notification.repository.NotificationRepository;
+import com.sharespace.sharespace_server.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +29,9 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 
 	private final ConcurrentHashMap<Long, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
+	private final UserRepository userRepository;
+	private final NotificationRepository notificationRepository;
+	private final BaseResponseService baseResponseService;
 	public SseEmitter subscribe(Long userId) {
 		SseEmitter emitter = new SseEmitter();
 		// 기본적으로 연결 유지
@@ -28,8 +47,15 @@ public class NotificationService {
 		return emitter;
 	}
 
-
+	@Transactional
 	public void sendNotification(Long userId, String message)  {
+		Notification notification = new Notification();
+		notification.setUser(userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND)));
+		notification.setMessage(message);
+		notification.setCreatedAt(LocalDateTime.now());
+		notification.setRead(false);
+		notificationRepository.save(notification);
 		SseEmitter emitter = sseEmitters.get(userId);
 		if (emitter != null) {
 			try {
@@ -39,5 +65,42 @@ public class NotificationService {
 				sseEmitters.remove(userId);
 			}
 		}
+	}
+	
+	// 메시지 알림 처리
+	public void newMessage(Long userId, String messageContent) {
+		String notificationMessage = "새로운 메시지가 도착했습니다: " + messageContent;
+		sendNotification(userId, notificationMessage);
+	}
+
+	public BaseResponse<List<NotificationAllResponse>> getNotifications(Long userId) {
+		User user = userRepository.findById(userId).
+		orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		List<Notification> notificationList = notificationRepository.findAllByUser(user);
+
+		List<NotificationAllResponse> response = new ArrayList<>();
+		LocalDateTime now = LocalDateTime.now();
+		for (Notification notification : notificationList) {
+			Duration duration = Duration.between(notification.getCreatedAt(), now);
+			int timeElapsed = (int) duration.toHours();
+
+			NotificationAllResponse notificationResponse = NotificationAllResponse.builder()
+					.notifcationId(notification.getId())
+					.isRead(notification.isRead())
+					.timeElapsed(timeElapsed)
+					.message(notification.getMessage())
+					.build();
+
+			response.add(notificationResponse);
+		}
+		return baseResponseService.getSuccessResponse(response);
+	}
+
+	public BaseResponse<Void> deleteNotifcation(Long notificationId) {
+		notificationRepository.findById(notificationId)
+			.orElseThrow(() -> new CustomRuntimeException(NotificationException.NOTIFCATION_NOT_FOUND));
+
+		notificationRepository.deleteById(notificationId);
+		return baseResponseService.getSuccessResponse();
 	}
 }
