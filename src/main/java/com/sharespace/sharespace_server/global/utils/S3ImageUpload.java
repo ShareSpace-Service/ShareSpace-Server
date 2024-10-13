@@ -152,14 +152,7 @@ public class S3ImageUpload {
 	 */
 	public List<String> uploadImages(List<MultipartFile> multipartFiles, String dirName) {
 		List<String> uploadedUrls = new ArrayList<>();
-
 		multipartFiles.forEach(url -> uploadedUrls.add(uploadSingleImage(url, dirName)));
-
-		for (MultipartFile file : multipartFiles) {
-			String fileName = uploadSingleImage(file, dirName);
-			uploadedUrls.add(fileName);
-		}
-
 		return uploadedUrls;
 	}
 
