@@ -152,14 +152,7 @@ public class S3ImageUpload {
 	 */
 	public List<String> uploadImages(List<MultipartFile> multipartFiles, String dirName) {
 		List<String> uploadedUrls = new ArrayList<>();
-
 		multipartFiles.forEach(url -> uploadedUrls.add(uploadSingleImage(url, dirName)));
-
-		for (MultipartFile file : multipartFiles) {
-			String fileName = uploadSingleImage(file, dirName);
-			uploadedUrls.add(fileName);
-		}
-
 		return uploadedUrls;
 	}
 
@@ -216,6 +209,7 @@ public class S3ImageUpload {
 	 *
 	 * <p>처리 과정:</p>
 	 * <ul>
+	 *     <li>기존 이미지(deleteImageUrl)의 존재를 확인합니다..</li>
 	 *     <li>기존 이미지 URL을 기반으로 S3에서 이미지를 삭제합니다.</li>
 	 *     <li>새로운 이미지를 주어진 디렉토리에 업로드하고 해당 이미지의 S3 URL을 반환합니다.</li>
 	 * </ul>
@@ -228,7 +222,10 @@ public class S3ImageUpload {
 	 * @Author thereisname
 	 */
 	public String updateImage(String deleteImageUrl, MultipartFile newImageUrl, String dirName) {
-		removeImageFromS3(deleteImageUrl);
+		if (deleteImageUrl != null && !deleteImageUrl.isEmpty()) {
+			removeImageFromS3(deleteImageUrl);
+		}
+
 		return uploadSingleImage(newImageUrl, dirName);
 	}
 
@@ -276,7 +273,7 @@ public class S3ImageUpload {
 			// 마지막 점(.) 이후의 문자열을 확장자로 반환
 			return fileName.substring(fileName.lastIndexOf(".") + 1);
 		} else {
-			throw new IllegalArgumentException("Invalid file: no extension found.");
+			throw new CustomRuntimeException(ImageException.IMAGE_NOT_EXCEPTION);
 		}
 	}
 
