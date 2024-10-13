@@ -280,7 +280,7 @@ public class S3ImageUpload {
 			// 마지막 점(.) 이후의 문자열을 확장자로 반환
 			return fileName.substring(fileName.lastIndexOf(".") + 1);
 		} else {
-			throw new IllegalArgumentException("Invalid file: no extension found.");
+			throw new CustomRuntimeException(ImageException.IMAGE_NOT_EXCEPTION);
 		}
 	}
 
