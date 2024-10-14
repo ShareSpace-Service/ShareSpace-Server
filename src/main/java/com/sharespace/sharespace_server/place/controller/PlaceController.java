@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +17,7 @@ import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.place.dto.PlacesResponse;
 import com.sharespace.sharespace_server.place.service.PlaceService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,13 +48,13 @@ public class PlaceController {
 
 	// task: 장소 등록
 	@PostMapping
-	public BaseResponse<String> registerPlace(@ModelAttribute PlaceRequest placeRequest) {
+	public BaseResponse<String> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest) {
 		return placeService.createPlace(placeRequest);
 	}
 
 	// task: 장소 수정
 	@PutMapping
-	public BaseResponse<String> updatePlace(@ModelAttribute PlaceUpdateRequest placeRequest) {
+	public BaseResponse<String> updatePlace(@Valid @ModelAttribute PlaceUpdateRequest placeRequest) {
 		return placeService.updatePlace(placeRequest);
 	}
 }
