@@ -147,7 +147,7 @@ public class PlaceService {
 			.period(placeRequest.getPeriod())
 			.description(placeRequest.getDescription())
 			.category(placeRequest.getCategory())
-			.imageUrl(combinedImageUrls.toString())
+			.imageUrl(String.join(",", combinedImageUrls))
 			.build();
 
 		placeRepository.save(place);
