@@ -36,7 +36,7 @@ CREATE TABLE product (
     category ENUM('LARGE', 'MEDIUM', 'SMALL') NOT NULL,
     period INT NOT NULL,
     description VARCHAR(100) NULL,
-    image_url TEXT NOT NULL,
+    image_url TEXT,
     writed_at DATETIME NOT NULL,
     is_placed BOOLEAN NOT NULL COMMENT '장소 미배정 상태 관리',
     PRIMARY KEY (id),
