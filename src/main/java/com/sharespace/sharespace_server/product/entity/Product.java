@@ -37,7 +37,7 @@ public class Product {
     @Column(name = "description", length = 100)
     private String description;
 
-    @Column(name = "image_url", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
     @CreationTimestamp
