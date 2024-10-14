@@ -45,6 +45,15 @@ public class PlaceService {
 	private final LocationTransform locationTransform;
 	private final S3ImageUpload s3ImageUpload;
 
+	/**
+	 * <p>모든 장소 리스트를 불러와 게스트 사용자 정보를 포함한 PlacesResponse 리스트로 반환합니다.</p>
+	 *
+	 * <p>이 메서드는 데이터베이스에서 모든 장소 정보를 조회하고, 각 장소에 대해 게스트 사용자와 호스트 간의 거리를 계산하여
+	 * PlacesResponse 객체로 변환합니다.</p>
+	 *
+	 * @return 모든 장소 정보를 담은 PlacesResponse 리스트를 성공 응답 형태로 반환합니다.
+	 * @Author thereisname
+	 */
 	@Transactional
 	public BaseResponse<List<PlacesResponse>> getAllPlaces() {
 		User guest = findByUser(2L);
@@ -56,6 +65,17 @@ public class PlaceService {
 		return baseResponseService.getSuccessResponse(placesResponseList);
 	}
 
+	/**
+	 * <p>주어진 상품의 카테고리와 관련된 장소 리스트를 조회하여 PlacesResponse 리스트로 반환합니다.</p>
+	 *
+	 * <p>이 메서드는 주어진 상품 ID를 통해 상품을 조회한 후, 해당 상품의 카테고리와 그와 연관된 카테고리
+	 * (예: 상품이 "Medium"인 경우 "Medium"과 "Large" 카테고리)를 기반으로 장소를 조회하고, 이를 게스트 사용자 정보를
+	 * 포함한 PlacesResponse 리스트로 변환하여 반환합니다.</p>
+	 *
+	 * @param productId 상품 ID (Long 타입)
+	 * @return 상품 카테고리에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트를 성공 응답 형태로 반환합니다.
+	 * @Author thereisname
+	 */
 	@Transactional
 	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(Long productId) {
 		User guest = findByUser(2L);
@@ -72,6 +92,16 @@ public class PlaceService {
 		return baseResponseService.getSuccessResponse(places);
 	}
 
+	/**
+	 * <p>주어진 장소 ID를 통해 장소 상세 정보를 조회하여 PlaceDetailResponse로 반환합니다.</p>
+	 *
+	 * <p>이 메서드는 주어진 장소 ID로 장소를 조회한 후, 조회된 장소 정보를 PlaceDetailResponse 객체로 변환하여 반환합니다.
+	 * 장소가 존재하지 않을 경우 예외를 발생시킵니다.</p>
+	 *
+	 * @param placeId 장소 ID (Long 타입)
+	 * @return 조회된 장소 정보를 담은 PlaceDetailResponse 객체를 성공 응답 형태로 반환합니다.
+	 * @Author thereisname
+	 */
 	@Transactional
 	public BaseResponse<PlaceDetailResponse> getPlaceDetail(Long placeId) {
 		Place place = placeRepository.findById(placeId)
@@ -82,6 +112,17 @@ public class PlaceService {
 		return baseResponseService.getSuccessResponse(placeDetailResponse);
 	}
 
+	/**
+	 * <p>주어진 요청 데이터를 사용하여 새로운 장소를 생성하고 성공 메시지를 반환합니다.</p>
+	 *
+	 * <p>이 메서드는 사용자 ID를 기반으로 장소를 생성하며, 이미 동일한 사용자 ID로 등록된 장소가 있을 경우
+	 * 예외를 발생시킵니다. 또한, 이미지 업로드를 처리하며, 이미지가 없거나 유효하지 않을 경우에도 예외를 발생시킵니다.</p>
+	 *
+	 * @param placeRequest 장소 생성에 필요한 요청 데이터 (PlaceRequest 타입)
+	 * @return 성공적으로 생성된 장소에 대한 성공 메시지를 반환합니다.
+	 * @throws CustomRuntimeException 동일한 사용자 ID로 이미 장소가 등록경우, 이미지가 유효하지 않거나 누락된 경우 발생합니다.
+	 * @Author thereisname
+	 */
 	@Transactional
 	public BaseResponse<String> createPlace(PlaceRequest placeRequest) {
 		User user = findByUser(5L);
@@ -114,6 +155,20 @@ public class PlaceService {
 		return baseResponseService.getSuccessResponse("장소가 성공적으로 등록되었습니다.");
 	}
 
+	/**
+	 * <p>주어진 요청 데이터를 사용하여 기존 장소 정보를 업데이트하고 성공 메시지를 반환합니다.</p>
+	 *
+	 * <p>이 메서드는 사용자 ID를 기반으로 해당 사용자가 소유한 장소를 조회한 후, 이미지, 위치, 기타 필드들을
+	 * 업데이트합니다. 특히, 이미지 세트를 업데이트하고, 사용자의 위치 정보가 변경된 경우 그에 따라 사용자 좌표를
+	 * 갱신하며, 장소의 기타 필드들도 요청된 값으로 변경됩니다.</p>
+	 *
+	 * @param placeRequest 장소 업데이트에 필요한 요청 데이터 (PlaceUpdateRequest 타입)
+	 * @return 장소 수정에 대한 성공 메시지를 반환합니다.
+	 *
+	 * @throws CustomRuntimeException  해당 사용자 ID로 등록된 장소가 존재하지 않는 경우 PLACE_NOT_FOUND 예외가 발생합니다.
+	 *
+	 * @Author thereisname
+	 */
 	@Transactional
 	public BaseResponse<String> updatePlace(PlaceUpdateRequest placeRequest) {
 		User user = findByUser(1L);
