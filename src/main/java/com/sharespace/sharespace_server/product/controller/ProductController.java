@@ -2,6 +2,7 @@ package com.sharespace.sharespace_server.product.controller;
 
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.product.dto.ProductRegisterRequest;
+import com.sharespace.sharespace_server.product.dto.ProductRegisterResponse;
 import com.sharespace.sharespace_server.product.service.ProductService;
 //import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -20,7 +21,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping("/register")
-    public BaseResponse<Void> register(@Valid @ModelAttribute ProductRegisterRequest request) {
+    public BaseResponse<ProductRegisterResponse> register(@Valid @ModelAttribute ProductRegisterRequest request) {
 //            , HttpServletRequest httpRequest) {
 //        Long userId = extractUserId(httpRequest);
         Long userId = 1L;
