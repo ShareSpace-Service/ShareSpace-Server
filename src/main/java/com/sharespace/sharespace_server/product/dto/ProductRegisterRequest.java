@@ -29,7 +29,7 @@ public class ProductRegisterRequest {
     private Integer period;
     @NotNull
     @NotEmpty
-    private String imageUrl;
+    private List<MultipartFile> imageUrl;
     private String description;
 
 }
