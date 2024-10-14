@@ -8,6 +8,7 @@ import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.product.dto.ProductRegisterRequest;
+import com.sharespace.sharespace_server.product.dto.ProductRegisterResponse;
 import com.sharespace.sharespace_server.product.entity.Product;
 import com.sharespace.sharespace_server.product.repository.ProductRepository;
 import com.sharespace.sharespace_server.user.entity.User;
@@ -25,7 +26,7 @@ public class ProductService {
     private final S3ImageUpload s3ImageUpload;
 
     @Transactional
-    public BaseResponse<Void> register(ProductRegisterRequest request, Long userId) {
+    public BaseResponse<ProductRegisterResponse> register(ProductRegisterRequest request, Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
 
         if (!s3ImageUpload.hasValidImages(request.getImageUrl())) {
@@ -46,6 +47,8 @@ public class ProductService {
         List<String> imagesUrl = s3ImageUpload.uploadImages(request.getImageUrl(), "product/" + product.getId());
         product.setImageUrl(String.join(",", imagesUrl));
 
-        return baseResponseService.getSuccessResponse();
+        ProductRegisterResponse response = new ProductRegisterResponse(product.getId());
+
+        return baseResponseService.getSuccessResponse(response);
     }
 }
