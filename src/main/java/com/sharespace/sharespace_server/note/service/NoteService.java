@@ -48,9 +48,7 @@ public class NoteService {
 
 	@Transactional
 	public BaseResponse<List<NoteResponse>> getNote() {
-		// user Id의 값을 가져오는 과정. 추후 Token으로 user을 추정하여 id값을 가져올 예정
-		User user = userRepository.findById(2L)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		User user = findUserById(2L);
 
 		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(user.getId()).stream()
 			.map(note -> NoteResponse.builder()
@@ -61,29 +59,15 @@ public class NoteService {
 				.build())
 			.collect(Collectors.toList());
 
-		if (noteResponsesList.isEmpty()) {
-			throw new CustomRuntimeException(NoteException.NOTE_NOT_FOUND);
-		}
-
 		return baseResponseService.getSuccessResponse(noteResponsesList);
 	}
 
 	@Transactional
 	public BaseResponse<String> createNote(NoteRequest noteRequest) {
 		// User Id 불러오기
-		User sender = userRepository.findById(4L)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		User sender = findUserById(4L);
 
-		User receiver = userRepository.findById(noteRequest.getReceiverId())
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
-
-		if (noteRequest.getTitle().isEmpty() || noteRequest.getContent().isEmpty()) {
-			throw new CustomRuntimeException(NoteException.NOTE_TITLE_ANE_CONTENT_EMPTY);
-		}
-
-		if (noteRequest.getReceiverId() == null) {
-			throw new CustomRuntimeException(NoteException.RECEIVER_NOT_FOUND);
-		}
+		User receiver = findUserById(noteRequest.getReceiverId());
 
 		Long placeUserId = sender.getRole().equals(Role.ROLE_HOST) ? sender.getId() : receiver.getId();
 		Long placeId = placeRepository.findByUserId(placeUserId)
@@ -143,8 +127,7 @@ public class NoteService {
 
 	@Transactional
 	public BaseResponse<List<NoteSenderListResponse>> getSenderList() {
-		User user = userRepository.findById(1L)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		User user = findUserById(1L);
 
 		List<Long> userIds = getUserIdsByRole(user);
 		if (userIds.isEmpty()) {
@@ -160,6 +143,11 @@ public class NoteService {
 			.toList();
 
 		return baseResponseService.getSuccessResponse(users);
+	}
+
+	private User findUserById(Long userId) {
+		return userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 	}
 
 	private List<Long> getUserIdsByRole(User user) {

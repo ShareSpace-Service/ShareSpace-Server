@@ -17,6 +17,7 @@ import com.sharespace.sharespace_server.note.dto.NoteResponse;
 import com.sharespace.sharespace_server.note.dto.NoteSenderListResponse;
 import com.sharespace.sharespace_server.note.service.NoteService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,7 +34,7 @@ public class NoteController {
 	}
 
 	@PostMapping
-	public  BaseResponse<String> createNote(@RequestBody NoteRequest noteRequest) {
+	public  BaseResponse<String> createNote(@Valid @RequestBody NoteRequest noteRequest) {
 		return noteService.createNote(noteRequest);
 	}
 
