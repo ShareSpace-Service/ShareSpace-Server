@@ -1,6 +1,9 @@
 package com.sharespace.sharespace_server.product.entity;
 
 import com.sharespace.sharespace_server.global.enums.Category;
+import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
+import com.sharespace.sharespace_server.global.exception.error.MatchingException;
+import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,4 +49,23 @@ public class Product {
 
     @Column(name = "is_placed", nullable = false)
     private Boolean isPlaced;
+
+    // 물품 배정 상태를 false로 set하는 상태 변경 함수
+    public void unassign() {
+        this.setIsPlaced(false);
+    }
+
+    // Product와 Place의 카테고리 검증 메서드
+    public void validateCategoryForPlace(Place place) {
+        if (this.getCategory().getValue() > place.getCategory().getValue()) {
+            throw new CustomRuntimeException(MatchingException.CATEGORY_NOT_MATCHED);
+        }
+    }
+
+    // Product와 Place의 기간(Period) 검증 메서드
+    public void validatePeriodForPlace(Place place) {
+        if (this.getPeriod() > place.getPeriod()) {
+            throw new CustomRuntimeException(MatchingException.INVALID_PRODUCT_PERIOD);
+        }
+    }
 }
