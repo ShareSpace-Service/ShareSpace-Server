@@ -16,4 +16,6 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 	Matching findByProductIdInAndPlaceId(List<Long> product, Long place);
 	Optional<Matching> findByProductIdAndPlaceId(Long productId, Long placeId);
 	List<Matching> findAllByStatus(Status status);
+
+	Matching findByProductId(Long ProductId);
 }
