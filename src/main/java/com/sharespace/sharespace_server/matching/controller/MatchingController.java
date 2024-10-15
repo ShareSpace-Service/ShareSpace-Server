@@ -3,6 +3,7 @@ package com.sharespace.sharespace_server.matching.controller;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -79,7 +80,7 @@ public class MatchingController {
 	}
 
 	@PostMapping("/uploadImage/host")
-	public BaseResponse<Void> uploadImage(@Valid @RequestBody MatchingUploadImageRequest request) {
+	public BaseResponse<Void> uploadImage(@Valid @ModelAttribute MatchingUploadImageRequest request) {
 		return matchingService.uploadImage(request);
 	}
 }
