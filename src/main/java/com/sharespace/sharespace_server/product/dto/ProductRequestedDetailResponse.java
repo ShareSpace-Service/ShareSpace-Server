@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.product.dto;
 
+import java.util.List;
+
 import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.product.entity.Product;
 
@@ -15,7 +17,7 @@ import lombok.Getter;
 @Builder
 public class ProductRequestedDetailResponse {
 	private String title;
-	private String image;
+	private List<String> image;
 	private Category category;
 	private int period;
 	private String description;
@@ -24,7 +26,7 @@ public class ProductRequestedDetailResponse {
 	Product product) {
 		return ProductRequestedDetailResponse.builder()
 			.title(product.getTitle())
-			.image(product.getImageUrl())
+			.image(List.of(product.getImageUrl().split(",")))
 			.category(product.getCategory())
 			.period(product.getPeriod())
 			.description(product.getDescription())
