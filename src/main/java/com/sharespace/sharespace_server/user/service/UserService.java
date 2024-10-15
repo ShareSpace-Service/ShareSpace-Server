@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.user.service;
 
+import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
@@ -7,6 +8,7 @@ import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
+import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.entity.User;
@@ -19,8 +21,10 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -113,6 +117,28 @@ public class UserService {
         userRepository.save(user);
 
         return baseResponseService.getSuccessResponse();
+    }
+
+    @Transactional
+    public BaseResponse<String> getPlace(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        String location = user.getLocation();
+        return baseResponseService.getSuccessResponse(location);
+    }
+
+    @Transactional
+    public BaseResponse<UserGetInfoResponse> getInfo(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
+        UserGetInfoResponse userInfo = UserGetInfoResponse.builder()
+                .nickName(user.getNickName())
+                .email(user.getEmail())
+                .image(user.getImage())
+                .role(StringUtils.capitalize(user.getRole().getValue().toLowerCase(Locale.ROOT)))
+                .location(user.getLocation())
+                .build();
+
+        return baseResponseService.getSuccessResponse(userInfo);
     }
 
     // 이메일 중복 검사 메소드
