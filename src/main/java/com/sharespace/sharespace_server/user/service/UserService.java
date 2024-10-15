@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.user.service;
 
+import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
@@ -20,8 +21,10 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -126,11 +129,12 @@ public class UserService {
     @Transactional
     public BaseResponse<UserGetInfoResponse> getInfo(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
         UserGetInfoResponse userInfo = UserGetInfoResponse.builder()
                 .nickName(user.getNickName())
                 .email(user.getEmail())
                 .image(user.getImage())
-                .role(String.valueOf(user.getRole()))
+                .role(StringUtils.capitalize(user.getRole().getValue().toLowerCase(Locale.ROOT)))
                 .location(user.getLocation())
                 .build();
 
