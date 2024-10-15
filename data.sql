@@ -17,6 +17,14 @@ CREATE TABLE user (
     PRIMARY KEY (id)
 );
 
+CREATE TABLE jwt (
+                     id BIGINT NOT NULL AUTO_INCREMENT,
+                     user_id BIGINT NOT NULL,
+                     refresh_token TEXT NOT NULL,
+                     PRIMARY KEY (id),
+                     FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
 CREATE TABLE place (
     id BIGINT NOT NULL AUTO_INCREMENT,
     user_id BIGINT NOT NULL,
