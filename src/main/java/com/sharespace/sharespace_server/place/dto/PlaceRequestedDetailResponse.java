@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.place.dto;
 
+import java.util.List;
+
 import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.place.entity.Place;
 
@@ -15,7 +17,7 @@ import lombok.Getter;
 @Builder
 public class PlaceRequestedDetailResponse {
 	private String title;
-	private String image;
+	private List<String> image;
 	private Category category;
 	private int period;
 	private String description;
@@ -23,7 +25,7 @@ public class PlaceRequestedDetailResponse {
 	public static PlaceRequestedDetailResponse of(Place place) {
 		return PlaceRequestedDetailResponse.builder()
 			.title(place.getTitle())
-			.image(place.getImageUrl())
+			.image(List.of(place.getImageUrl().split(",")))
 			.category(place.getCategory())
 			.period(place.getPeriod())
 			.build();

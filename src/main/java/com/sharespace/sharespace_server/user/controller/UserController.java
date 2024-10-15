@@ -26,7 +26,7 @@ public class UserController {
     }
 
     @PutMapping("/update")
-    public BaseResponse<Void> update(@Valid @RequestBody UserUpdateRequest request) {
+    public BaseResponse<Void> update(@Valid @ModelAttribute UserUpdateRequest request) {
         return userService.update(request);
     }
 }

@@ -5,6 +5,7 @@ import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
+import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
@@ -32,6 +33,7 @@ public class UserService {
     private final BCryptPasswordEncoder encoder;
     private final JavaMailSender javaMailSender;
     private final Map<String, Integer> verificationCodes = new ConcurrentHashMap<>();
+    private final S3ImageUpload s3ImageUpload;
 
     @Transactional
     public BaseResponse<Long> register(UserRegisterRequest request) {
@@ -97,10 +99,15 @@ public class UserService {
         Double latitude = coordinates.get("latitude");
         Double longitude = coordinates.get("longitude");
 
+        // profile Image 수정
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            String newImageUrl = s3ImageUpload.updateImage(user.getImage(), request.getImage(), "profile/" + user.getId());
+            user.setImage(newImageUrl);
+        }
+
         user.setLocation(request.getLocation());
         user.setLatitude(latitude);
         user.setLongitude(longitude);
-        user.setImage(request.getImage());
         user.setNickName(request.getNickName());
 
         userRepository.save(user);
