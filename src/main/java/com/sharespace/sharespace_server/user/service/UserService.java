@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -155,6 +156,47 @@ public class UserService {
         } else {
             throw new CustomRuntimeException(UserException.EMAIL_VALIDATION_FAIL);
         }
+    }
+
+    // 로그인할 때 Request가 Email로 오므로 email로 member 찾아야 함
+    public boolean checkAccountLocked(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        // member의 lockTime이 null이 아니면 계정이 잠금상태인 것임
+        if (user.getLockTime() != null) {
+            LocalDateTime unlockTime = user.getLockTime().plusMinutes(5);
+            if (LocalDateTime.now().isAfter(unlockTime)) {
+                user.setLockTime(null);
+                user.setFailedAttempts(0);
+                userRepository.save(user);
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 로그인 시도 실패 로직
+
+    public void loginAttemptationFailed(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
+        user.setFailedAttempts(user.getFailedAttempts() + 1);
+        if (user.getFailedAttempts() >= 5) {
+            user.setLockTime(LocalDateTime.now());
+        }
+        userRepository.save(user);
+    }
+
+    // 로그인 성공시
+    public void loginAttemptationSuccess(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        user.setFailedAttempts(0);
+        user.setLockTime(null);
+        userRepository.save(user);
     }
 
 }
