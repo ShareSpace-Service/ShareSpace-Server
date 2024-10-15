@@ -3,7 +3,6 @@
 	import java.time.LocalDateTime;
 
 	import com.sharespace.sharespace_server.global.enums.Category;
-	import com.sharespace.sharespace_server.global.exception.error.ImageException;
 	import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 	import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 	import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
@@ -327,14 +326,12 @@
 
 		@Transactional
 		public BaseResponse<Void> uploadImage(MatchingUploadImageRequest request) {
-			// TODO : 이미지 업로드의 주체는 Host여야 한다.
+			// TODO : 유효성 검증;이미지 업로드의 주체는 Host여야 함
 			Matching matching = findMatching(request.getMatchingId());
-			if (!s3ImageUpload.hasValidImages(request.getImageUrl())) {
-				throw new CustomRuntimeException(ImageException.IMAGE_REQUIRED_FIELDS_EMPTY);
-			};
 			// 다중 이미지 S3에 업로드
-			List<String> combinedImageUrls = s3ImageUpload.uploadImages(request.getImageUrl(), "matching/" +request.getMatchingId());
-			matching.setImage(String.join(",", combinedImageUrls));
+
+			String imageUrl = s3ImageUpload.uploadSingleImage(request.getImageUrl(), "matching/" +matching.getId());
+			matching.setImage(imageUrl);
 			matchingRepository.save(matching);
 
 			return baseResponseService.getSuccessResponse();
