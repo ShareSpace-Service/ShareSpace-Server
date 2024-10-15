@@ -5,9 +5,12 @@ import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import static com.sharespace.sharespace_server.global.utils.RequestParser.extractUserId;
 
 @RestController
 @RequestMapping(value = "/user")
@@ -29,4 +32,11 @@ public class UserController {
     public BaseResponse<Void> update(@Valid @ModelAttribute UserUpdateRequest request) {
         return userService.update(request);
     }
+
+    @GetMapping("/place")
+    public BaseResponse<String> getPlace(HttpServletRequest request) {
+        Long userId = extractUserId(request);
+        return userService.getPlace(userId);
+    }
+
 }

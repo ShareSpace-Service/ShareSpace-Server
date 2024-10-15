@@ -115,6 +115,13 @@ public class UserService {
         return baseResponseService.getSuccessResponse();
     }
 
+    @Transactional
+    public BaseResponse<String> getPlace(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        String location = user.getLocation();
+        return baseResponseService.getSuccessResponse(location);
+    }
+
     // 이메일 중복 검사 메소드
     private void emailDuplicate(String email) {
         if(userRepository.findByEmail(email).isPresent()) {
