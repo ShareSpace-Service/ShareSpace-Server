@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.user.dto;
 
+import org.springframework.web.multipart.MultipartFile;
 import com.sharespace.sharespace_server.global.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -19,10 +20,7 @@ public class UserUpdateRequest {
     @NotNull
     private Long userId;
 
-    @NotNull
-    @NotEmpty(message = "빈 값을 입력할 수 없습니다.")
-    @NotBlank(message = "공백일 수 없습니다.")
-    private String image;
+    private MultipartFile image;
 
     @NotNull
     @NotEmpty(message = "빈 값을 입력할 수 없습니다.")
