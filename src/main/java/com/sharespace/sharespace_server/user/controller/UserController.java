@@ -2,6 +2,7 @@ package com.sharespace.sharespace_server.user.controller;
 
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
+import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.service.UserService;
@@ -37,6 +38,12 @@ public class UserController {
     public BaseResponse<String> getPlace(HttpServletRequest request) {
         Long userId = extractUserId(request);
         return userService.getPlace(userId);
+    }
+
+    @GetMapping("/detail")
+    public BaseResponse<UserGetInfoResponse> getInfo(HttpServletRequest request) {
+        Long userId = extractUserId(request);
+        return userService.getInfo(userId);
     }
 
 }

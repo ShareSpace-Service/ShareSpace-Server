@@ -7,6 +7,7 @@ import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
+import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.entity.User;
@@ -120,6 +121,20 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
         String location = user.getLocation();
         return baseResponseService.getSuccessResponse(location);
+    }
+
+    @Transactional
+    public BaseResponse<UserGetInfoResponse> getInfo(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        UserGetInfoResponse userInfo = UserGetInfoResponse.builder()
+                .nickName(user.getNickName())
+                .email(user.getEmail())
+                .image(user.getImage())
+                .role(String.valueOf(user.getRole()))
+                .location(user.getLocation())
+                .build();
+
+        return baseResponseService.getSuccessResponse(userInfo);
     }
 
     // 이메일 중복 검사 메소드
