@@ -33,6 +33,10 @@ cloud:
     stack:
       auto: false
 
+jwt:
+  token:
+    secret-key: ${JWT_SECRET_KEY}
+
 #  jpa:
 #    hibernate:
 #      ddl-auto: update
