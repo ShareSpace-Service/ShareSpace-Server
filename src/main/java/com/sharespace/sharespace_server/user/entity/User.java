@@ -10,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -88,4 +88,10 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+	public void updateLocation(String location, Map<String, Double> coordinates) {
+        this.setLocation(location);
+        this.setLatitude(coordinates.get("latitude"));
+        this.setLongitude(coordinates.get("longitude"));
+	}
 }

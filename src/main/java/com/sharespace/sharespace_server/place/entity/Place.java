@@ -1,6 +1,11 @@
 package com.sharespace.sharespace_server.place.entity;
 
+import java.util.List;
+import java.util.Objects;
+
 import com.sharespace.sharespace_server.global.enums.Category;
+import com.sharespace.sharespace_server.place.dto.PlaceRequest;
+import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.user.entity.User;
 
 import jakarta.persistence.Column;
@@ -58,5 +63,32 @@ public class Place {
 		this.period = period;
 		this.description = description;
 		this.imageUrl = imageUrl;
+	}
+
+	public static Place from(PlaceRequest placeRequest, User user, List<String> combinedImageUrls) {
+		return Place.builder()
+			.user(user)
+			.title(placeRequest.getTitle())
+			.category(placeRequest.getCategory())
+			.period(placeRequest.getPeriod())
+			.description(placeRequest.getDescription())
+			.imageUrl(String.join(",", combinedImageUrls))
+			.build();
+	}
+
+	public void updateFields(PlaceUpdateRequest placeRequest, List<String> updatedImages) {
+		if (!Objects.equals(this.title, placeRequest.getTitle())) {
+			this.title = placeRequest.getTitle();
+		}
+		if (!Objects.equals(this.period, placeRequest.getPeriod())) {
+			this.period = placeRequest.getPeriod();
+		}
+		if (!Objects.equals(this.category, placeRequest.getCategory())) {
+			this.category = placeRequest.getCategory();
+		}
+		if (!Objects.equals(this.description, placeRequest.getDescription())) {
+			this.description = placeRequest.getDescription();
+		}
+		this.imageUrl = String.join(",", updatedImages);
 	}
 }
