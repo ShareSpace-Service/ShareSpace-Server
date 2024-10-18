@@ -25,6 +25,7 @@ import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDe
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
+import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.place.dto.MatchingPlaceDto;
 import com.sharespace.sharespace_server.place.dto.PlaceRequestedDetailResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
@@ -39,12 +40,14 @@ import com.sharespace.sharespace_server.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.sharespace.sharespace_server.global.enums.NotificationMessage.*;
 import static com.sharespace.sharespace_server.global.enums.Status.*;
 
 @Service
 @RequiredArgsConstructor
 public class MatchingService {
 
+	private final NotificationService notificationService;
 	private final BaseResponseService baseResponseService;
 	private final MatchingRepository matchingRepository;
 	private final ProductRepository productRepository;
@@ -62,9 +65,10 @@ public class MatchingService {
 	 * @param userId - 조회할 사용자의 ID
 	 * @return BaseResponse<List<MatchingShowAllResponse>> - 모든 매칭 정보 리스트를 담은 응답 객체
 	 */
+	
+	// TODO : N+1 문제 해결해야 함
 	public BaseResponse<List<MatchingShowAllResponse>> showAll(Long userId) {
 		User user = findUser(userId);
-
 		List<Product> products = productRepository.findAllByUserId(userId);
 
 		// 비즈니스 로직은 서비스가 담당, DTO 생성은 어셈블러가 담당
@@ -74,7 +78,7 @@ public class MatchingService {
 
 		return baseResponseService.getSuccessResponse(responses);
 	}
-	/**
+	/**s
 	 * MatchingKeepRequest 객체를 기반으로 Place와 Product를 매칭하여 Matching 엔티티를 생성하는 메서드
 	 *
 	 * 1. Place와 Product의 유효성을 검사하고,
@@ -101,6 +105,9 @@ public class MatchingService {
 		// 매칭 생성 및 처리 로직은 Matching 객체가 처리
 		Matching matching = Matching.create(product, place);
 		matchingRepository.save(matching);
+
+		// 요청받은 Host에게 알림 전송
+		notificationService.sendNotification(place.getUser().getId(), REQUEST_KEEPING_TO_HOST.getMessage());
 
 		return baseResponseService.getSuccessResponse();
 	}
@@ -155,9 +162,20 @@ public class MatchingService {
 
 		matchingRepository.save(matching);
 		// TODO : 알림 전송 로직 및 한 쪽만 수락했을 때 반대쪽에게 알림 전송
+		// 알림 전송 로직
+
+		// Host만 수락했을 때
+		if (matching.isHostCompleted() && !matching.isGuestCompleted()) {
+			notificationService.sendNotification(matching.getProduct().getUser().getId(),
+				HOST_COMPLETED_KEEPING.format(matching.getProduct().getUser().getNickName()));
+		}
+		// Guest만 수락했을 때
+		if (!matching.isHostCompleted() && matching.isGuestCompleted()) {
+			notificationService.sendNotification(matching.getProduct().getUser().getId(),
+				GUEST_COMPLETED_KEEPING.format(matching.getPlace().getUser().getNickName()));
+		}
 		return baseResponseService.getSuccessResponse();
 	}
-
 
 
 	/**
