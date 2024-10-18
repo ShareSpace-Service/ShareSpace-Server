@@ -65,11 +65,15 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) throws IOException {
         User user = (User)authResult.getPrincipal();
+        Jwt token = jwtService.createTokens(user.getId(), user);
+
+        // AccessToken 쿠키 저장
+        addJwtToCookie(response, "accessToken", token.getAccessToken(), 3600); // 1시간
+        // RefreshToken 쿠키 저장
+        addJwtToCookie(response, "refreshToken", token.getRefreshToken(), 60 * 60 * 24 * 60);  // 60일
+
         userService.loginAttemptationSuccess(obtainUsername(request));
         Collection<? extends GrantedAuthority> authorities = authResult.getAuthorities();
-        Jwt token = jwtService.createTokens(user.getId(), user);
-        // JWT를 쿠키에 저장
-        addJwtToCookie(response, token.getAccessToken(), "accessToken");
 
         sendUserLoginResponse(response, HttpStatus.OK);
     }
@@ -93,12 +97,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     // 로그인 성공시 JWT를 쿠키에 저장한다.
-    public void addJwtToCookie(HttpServletResponse response, String jwtToken, String cookieName) {
+    public void addJwtToCookie(HttpServletResponse response, String jwtToken, String cookieName, int maxAge) {
         Cookie cookie = new Cookie(cookieName, jwtToken);
         cookie.setHttpOnly(false);
         cookie.setSecure(false);
         cookie.setPath("/");
-        cookie.setMaxAge(60 * 120); // 2시간
+        cookie.setMaxAge(maxAge); // 2시간
         response.addCookie(cookie);
     }
 }
