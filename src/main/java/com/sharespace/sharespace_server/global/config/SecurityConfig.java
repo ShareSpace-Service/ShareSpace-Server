@@ -4,6 +4,7 @@ import com.sharespace.sharespace_server.global.filter.JwtAuthenticationFilter;
 import com.sharespace.sharespace_server.global.filter.LoginFilter;
 import com.sharespace.sharespace_server.jwt.service.JwtService;
 import com.sharespace.sharespace_server.user.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,18 +23,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 @Configuration
+@RequiredArgsConstructor
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class SecurityConfig{
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtService jwtService;
-
-
-    // 명시적인 생성자 정의
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtService jwtService) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.jwtService = jwtService;
-    }
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -43,7 +38,7 @@ public class SecurityConfig{
     @Bean
     public LoginFilter loginFilter(AuthenticationManager authenticationManager, UserService userService) {
         LoginFilter loginFilter = new LoginFilter(authenticationManager, jwtService, userService);
-        loginFilter.setFilterProcessesUrl("/login"); // 로그인 엔드포인트 설정
+        loginFilter.setFilterProcessesUrl("/user/login"); // 로그인 엔드포인트 설정
         return loginFilter;
     }
 

@@ -2,11 +2,15 @@ package com.sharespace.sharespace_server.user.service;
 
 import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
+import com.sharespace.sharespace_server.global.exception.error.JwtException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
+import com.sharespace.sharespace_server.jwt.entity.Token;
+import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
+import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
@@ -15,6 +19,10 @@ import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -22,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.CookieValue;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -35,9 +44,12 @@ public class UserService {
     private final BaseResponseService baseResponseService;
     private final LocationTransform locationTransform;
     private final BCryptPasswordEncoder encoder;
-    private final JavaMailSender javaMailSender;
+    JavaMailSender javaMailSender;
     private final Map<String, Integer> verificationCodes = new ConcurrentHashMap<>();
     private final S3ImageUpload s3ImageUpload;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final TokenJpaRepository tokenJpaRepository;
+
 
     @Transactional
     public BaseResponse<Long> register(UserRegisterRequest request) {
@@ -141,6 +153,24 @@ public class UserService {
         return baseResponseService.getSuccessResponse(userInfo);
     }
 
+    // 로그아웃
+    @Transactional
+    public BaseResponse<Void> logout(String accessToken, String refreshToken, HttpServletResponse response, Long userId) {
+
+        // 1. AccessToken 블랙리스트에 추가
+        tokenBlacklistService.addToBlacklist(accessToken);
+
+        // 2. 쿠키 만료 처리
+        expireCookie(response, "accessToken");
+        expireCookie(response, "refreshToken");
+
+        Token token = tokenJpaRepository.findByUserId(userId).orElseThrow(() -> new CustomRuntimeException(JwtException.REFRESH_TOKEN_NOT_FOUND_EXCEPTION));
+
+        tokenJpaRepository.delete(token);
+
+        return baseResponseService.getSuccessResponse();
+    }
+
     // 이메일 중복 검사 메소드
     private void emailDuplicate(String email) {
         if(userRepository.findByEmail(email).isPresent()) {
@@ -230,6 +260,25 @@ public class UserService {
         user.setFailedAttempts(0);
         user.setLockTime(null);
         userRepository.save(user);
+    }
+
+    // 로그인 성공시 JWT를 쿠키에 저장한다.
+    public void addJwtToCookie(HttpServletResponse response, String jwtToken, String cookieName) {
+        Cookie cookie = new Cookie(cookieName, jwtToken);
+        cookie.setHttpOnly(false);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 120); // 2시간
+        response.addCookie(cookie);
+    }
+
+    private void expireCookie(HttpServletResponse response, String tokenName) {
+        Cookie cookie = new Cookie(tokenName, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);  // 즉시 만료
+        response.addCookie(cookie);
     }
 
 }

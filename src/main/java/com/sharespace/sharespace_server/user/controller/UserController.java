@@ -7,6 +7,7 @@ import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +45,14 @@ public class UserController {
     public BaseResponse<UserGetInfoResponse> getInfo(HttpServletRequest request) {
         Long userId = extractUserId(request);
         return userService.getInfo(userId);
+    }
+
+    @PostMapping("/logout")
+    public BaseResponse<Void> logout(@CookieValue("accessToken") String accessToken,
+                                     @CookieValue("refreshToken") String refreshToken,
+                                     HttpServletResponse response, HttpServletRequest request) {
+        Long userId = extractUserId(request);
+        return userService.logout(accessToken, refreshToken, response, userId);
     }
 
 }
