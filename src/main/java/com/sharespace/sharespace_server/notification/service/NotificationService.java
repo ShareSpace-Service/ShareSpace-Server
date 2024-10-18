@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.notification.service;
 
+import static com.sharespace.sharespace_server.notification.entity.Notification.*;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -34,9 +36,12 @@ public class NotificationService {
 	private final BaseResponseService baseResponseService;
 	public SseEmitter subscribe(Long userId) {
 		SseEmitter emitter = new SseEmitter();
+		sseEmitters.put(userId, emitter);
 		// 기본적으로 연결 유지
 		try {
-			emitter.send(SseEmitter.event().name("INIT").data("SSE 연결됨"));
+			emitter.send(SseEmitter.event()
+				.name("INIT")
+				.data("SSE 연결됨"));
 		} catch(IOException e) {
 			emitter.completeWithError(e);
 		}
@@ -49,28 +54,21 @@ public class NotificationService {
 
 	@Transactional
 	public void sendNotification(Long userId, String message)  {
-		Notification notification = new Notification();
-		notification.setUser(userRepository.findById(userId)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND)));
-		notification.setMessage(message);
-		notification.setCreatedAt(LocalDateTime.now());
-		notification.setRead(false);
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		Notification notification = create(user, message);
 		notificationRepository.save(notification);
 		SseEmitter emitter = sseEmitters.get(userId);
 		if (emitter != null) {
 			try {
-				emitter.send(SseEmitter.event().name("NOTIFICATION").data(message));
+				emitter.send(SseEmitter.event()
+					.name("NOTIFICATION")
+					.data(message));
 			} catch (IOException e) {
 				emitter.completeWithError(e);
 				sseEmitters.remove(userId);
 			}
-		}
-	}
-	
-	// 메시지 알림 처리
-	public void newMessage(Long userId, String messageContent) {
-		String notificationMessage = "새로운 메시지가 도착했습니다: " + messageContent;
-		sendNotification(userId, notificationMessage);
+		} // TODO : emitter가 존재하지 않을 때 예외처리 필요
 	}
 
 	public BaseResponse<List<NotificationAllResponse>> getNotifications(Long userId) {
