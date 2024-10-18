@@ -32,4 +32,13 @@ public class Notification {
 	@Column(columnDefinition = "TEXT")
 	private String message;
 	private LocalDateTime createdAt;
+
+	public static Notification create(User user, String message) {
+		Notification notification = new Notification();
+		notification.setUser(user);
+		notification.setMessage(message);
+		notification.setCreatedAt(LocalDateTime.now());
+		notification.setRead(false);
+		return notification;
+	}
 }

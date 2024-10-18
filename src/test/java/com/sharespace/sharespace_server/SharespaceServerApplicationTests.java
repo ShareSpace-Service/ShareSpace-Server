@@ -6,8 +6,5 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class SharespaceServerApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
 
 }
