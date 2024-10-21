@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -186,27 +187,58 @@ public class UserService {
     }
 
     // 이메일 전송 메소드
-    private void sendEmail(String Email) {
-        int number = (int)(Math.random() * (90000)) + 100000;
+    private void sendEmail(String email) {
+        int verificationCode = generateVerificationCode();
         MimeMessage message = javaMailSender.createMimeMessage();
 
         try {
             message.setFrom("teamsharespace@naver.com");
-            message.setRecipients(MimeMessage.RecipientType.TO, Email);
-            message.setSubject("이메일 인증");
-            String body = "";
-            body += "<h3>" + "요청하신 인증 번호입니다." + "</h3>";
-            body += "<h1>" + number + "</h1>";
-            body += "<h3>" + "감사합니다." + "</h3>";
-            message.setText(body,"UTF-8", "html");
+            message.setRecipients(MimeMessage.RecipientType.TO, email);
+            message.setSubject("ShareSpace 회원가입 이메일 인증");
+
+            String emailBody = createEmailBody(verificationCode);
+            message.setText(emailBody, "UTF-8", "html");
+
+            // 인증번호를 메모리에 저장
+            verificationCodes.put(email, verificationCode);
+
+            javaMailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            throw new CustomRuntimeException(UserException.EMAIL_SEND_FAIL);
         }
+    }
 
-        // 이메일과 인증번호를 메모리에 저장
-        verificationCodes.put(Email, number);
+    // 인증번호 생성 메서드
+    private int generateVerificationCode() {
+        return (int) (Math.random() * 90000) + 100000; // 6자리 랜덤 인증번호 생성
+    }
 
-        javaMailSender.send(message);
+    // 이메일 본문 생성 메서드
+    private String createEmailBody(int verificationCode) {
+        StringBuilder body = new StringBuilder();
+        body.append("<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0;'>")
+            .append("<img src='https://sharespace-images-bucket.s3.ap-northeast-2.amazonaws.com/sharespace.svg' alt='ShareSpace 로고' style='display: block; margin-bottom: 20px; max-width: 150px;'>")
+            .append("<h2 style='color: #333; font-weight: bold; font-size: 24px; border-top: 2px solid #ddd; padding-top: 40px;'>회원가입을 위한 인증 메일입니다.</h2>")
+            .append("<p>안녕하세요, 회원님</p>")
+            .append("<p>Share Space 이메일 인증을 위한 인증번호가 발급되었습니다.</p>")
+            .append("<p>아래의 인증번호 6자리를 진행 중인 화면에 입력하고 인증을 완료해 주세요.</p>")
+            .append("<div style='margin: 50px 0;'>")
+            .append("<table style='width: 100%;'>")
+            .append("<tr><td style='font-size: 14px; color: #333;'>인증번호</td>")
+            .append("<td style='font-size: 30px; color: #007bff; font-weight: bold; text-align: left;'>").append(verificationCode).append("</td></tr>")
+            .append("<tr><td style='font-size: 14px; color: #333; padding-top: 16px;'>유효기간</td>")
+            .append("<td style='font-size: 14px; color: #666; text-align: left; padding-top: 16px;'>")
+            .append(LocalDateTime.now().plusMinutes(10).format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")))
+            .append(" 까지</td></tr>")
+            .append("</table></div>")
+            .append("<div style='font-size: 12px; color: #555; background-color: #f9f9f9; padding: 15px; border-radius: 15px; display: inline-block;'>")
+            .append("<p><strong>안내</strong></p>")
+            .append("<ul style='padding-left: 20px;'>")
+            .append("<li>회원님의 개인정보 보호를 위해서 인증 번호 유효기간 내에 인증을 받으셔야 정상적으로 회원가입이 가능합니다.</li>")
+            .append("<li>타인이 실수로 회원님의 이메일 주소를 입력했을 경우 해당 메일이 발송될 수 있습니다.</li>")
+            .append("<li>궁금하신 사항은 고객센터 FAQ를 확인하시거나 teamsharespace@naver.com로 문의해주시면 정성껏 답변해 드리겠습니다.</li>")
+            .append("</ul></div></div>");
+        return body.toString();
     }
 
     // 이메일 인증 확인 메소드
