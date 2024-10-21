@@ -15,7 +15,8 @@ public enum UserException implements CustomException {
     MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 유저입니다."),
     INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호 양식을 지켜주세요."),
     PASSWORD_VALIDATE_FAIL(HttpStatus.BAD_REQUEST, "비밀번호와 비밀번호 확인란에 기입된 값이 다릅니다."),
-    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 틀렸습니다.");
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 틀렸습니다."),
+    EMAIL_SEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "이메일 전송에 실패하였습니다. 잠시 후 다시 시도해 주세요.");
 
     private final HttpStatus status;
     private final String message;
