@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.sharespace.sharespace_server.global.enums.NotificationMessage;
 import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
@@ -24,6 +25,7 @@ import com.sharespace.sharespace_server.note.dto.NoteResponse;
 import com.sharespace.sharespace_server.note.dto.NoteSenderListResponse;
 import com.sharespace.sharespace_server.note.entity.Note;
 import com.sharespace.sharespace_server.note.repository.NoteRepository;
+import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
 import com.sharespace.sharespace_server.product.entity.Product;
@@ -45,6 +47,7 @@ public class NoteService {
 	private final MatchingRepository matchingRepository;
 	private final PlaceRepository placeRepository;
 	private final ProductRepository productRepository;
+	private final NotificationService notificationService;
 
 	@Transactional
 	public BaseResponse<List<NoteResponse>> getNote() {
@@ -94,6 +97,8 @@ public class NoteService {
 
 		noteRepository.save(note);
 
+		// Receiver에게 알림 전송
+		notificationService.sendNotification(receiver.getId(), NotificationMessage.RECEIVED_NOTE.format(sender.getNickName()));
 		return baseResponseService.getSuccessResponse("쪽지 보내기 성공!");
 	}
 
