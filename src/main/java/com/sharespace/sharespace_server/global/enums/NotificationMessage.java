@@ -11,6 +11,8 @@ public enum NotificationMessage {
 	// 물품 보관 완료 요청 - HOST가 먼저 완료, GUEST가 먼저 완료
 	HOST_COMPLETED_KEEPING("Host가 보관 완료처리를 진행하였습니다. %s님께서 확인 부탁드립니다."),
 	GUEST_COMPLETED_KEEPING("Guest가 보관 완료처리를 진행하였습니다. %s님께서 확인 부탁드립니다."),
+	BOTH_COMPLETED_KEEPING("Host, Guest 양 측에서 보관 완료 처리되었습니다. 물품 반환이 완료되었습니다. 감사합니다."),
+	HOST_UPLOADED_IMAGE_TO_MATCHING("Host가 물품 보관 이미지를 업로드하였습니다. 확인 후 수락 버튼을 눌러주세요"),
 	RECEIVED_NOTE("%s님으로부터 쪽지가 도착하였습니다.");
 
 	private final String message;
