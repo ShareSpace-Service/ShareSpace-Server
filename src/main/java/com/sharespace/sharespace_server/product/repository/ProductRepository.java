@@ -12,6 +12,6 @@ import com.sharespace.sharespace_server.product.entity.Product;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-	@EntityGraph(attributePaths = {"matchings.place"})
+	// @EntityGraph(attributePaths = {"matching.place"})
 	List<Product> findAllByUserId(Long userId);
 }
