@@ -99,22 +99,12 @@ public class S3ImageUpload {
 	 * @Author thereisname
 	 */
 	public String uploadSingleImage(MultipartFile multipartFile, String dirName) {
-		// 파일 확잠자 가져오기
-		String extension = extractFileExtension(multipartFile.getOriginalFilename());
-		// 파일 확장자 검증
-		isAllowedFileExtension(extension);
-		// 파일명을 UUID로 고유하게 설정
-		String fileName = dirName + "/" + UUID.randomUUID() + "." + extension;
+		validateFileExtension(multipartFile);
+		String fileName = createUniqueFileName(dirName, multipartFile.getOriginalFilename());
+		ObjectMetadata metadata = createMetadata(multipartFile);
 
-		// 파일 메타데이터 설정
-		ObjectMetadata metadata = new ObjectMetadata();
-		metadata.setContentType(multipartFile.getContentType());
-		metadata.setContentLength(multipartFile.getSize());
+		uploadFileToS3(fileName, multipartFile, metadata);	// S3 Bucket에 업로드
 
-		// S3 Bucket에 업로드
-		putS3(fileName, multipartFile, metadata);
-
-		// 업로드된 파일의 URL 반환
 		return amazonS3.getUrl(bucketName, fileName).toString();
 	}
 
@@ -157,91 +147,127 @@ public class S3ImageUpload {
 	}
 
 	/**
-	 * <p>다중 이미지 수정 메서드</p>
+	 * S3에서 이미지 삭제 메서드
 	 *
-	 * <p>이 메서드는 기존 이미지의 일부를 삭제하고, 새로운 이미지를 업로드한 후
-	 * 최종적으로 업데이트된 이미지 URL 리스트 반환.</p>
-	 *
-	 * <pre>{@code
-	 * // 예시 사용법 (place/{userId} 폴더 내 이미지 삭제 및 업로드)
-	 * List<String> updateImages = s3ImageUpload.updateImages(
-	 * 			deleteImageUrl, newImageUrl,
-	 * 			"place/" + user.getId(), existingImageUrl
-	 * );
-	 * }</pre>
-	 *
-	 * @param deleteImageUrls 삭제할 이미지의 URL 목록. (S3에서 삭제할 이미지 URL들)
-	 * @param newImageUrl 업로드할 새로운 이미지 파일들의 리스트. (MultipartFile 타입)
-	 * @param dirName S3에 저장할 디렉토리 이름. (예: "profile/", "places/{userId}")
-	 * @param existingImageUrl 기존에 저장된 이미지 URL. (삭제 후 유지될 이미지 URL)
-	 * @return 최종적으로 유지되거나 새로 추가된 이미지들의 URL 리스트.
-	 *         S3에서 삭제한 URL을 제거하고, 새로 업로드한 URL을 추가한 리스트를 반환.
-	 * @Author thereisname
+	 * @param fileUrl 삭제할 이미지의 S3 URL
 	 */
-	public List<String> updateImageSet(List<String> deleteImageUrls, List<MultipartFile> newImageUrl, String dirName, String existingImageUrl) {
-		// 기존 이미지 URL을 리스트에 추가
-		List<String> uploadedUrls = new ArrayList<>(List.of(existingImageUrl));
-
-		// S3에서 이미지 삭제
-		if (!deleteImageUrls.isEmpty()) {
-			deleteImageUrls.forEach(this::removeImageFromS3);
-			// 삭제된 URL을 목록에서 제거
-			uploadedUrls.removeAll(deleteImageUrls);
+	public void deleteImage(String fileUrl) {
+		try {
+			amazonS3.deleteObject(bucketName, extractKeyFromUrl(fileUrl));
+		} catch (AmazonS3Exception e) {
+			log.error("Image Delete Error: {}", e.getMessage());
+			throw new CustomRuntimeException(ImageException.IMAGE_DELETE_FAIL);
 		}
-
-		// 새로운 이미지가 있으면 S3에 업로드
-		if (hasValidImages(newImageUrl)) {
-			// 새로운 이미지 파일을 S3에 업로드하고, URL을 리스트에 추가
-			List<String> url = uploadImages(newImageUrl, dirName);
-			uploadedUrls.addAll(url);
-		}
-
-		// 최종적으로 남은 이미지 URL 리스트 반환
-		return uploadedUrls;
 	}
 
-
 	/**
-	 * <p>기존 단일 이미지를 S3에서 삭제하고 새로운 이미지를 업로드하는 메서드.</p>
+	 * 이미지가 존재할 경우 삭제
 	 *
-	 * <p>이 메서드는 주어진 기존 이미지 URL을 사용하여 이미지를 S3에서 삭제한 후, 새로 업로드된 이미지를 S3에 저장하고
-	 * 해당 이미지의 S3 URL을 반환합니다.</p>
-	 *
-	 * <p>처리 과정:</p>
-	 * <ul>
-	 *     <li>기존 이미지(deleteImageUrl)의 존재를 확인합니다..</li>
-	 *     <li>기존 이미지 URL을 기반으로 S3에서 이미지를 삭제합니다.</li>
-	 *     <li>새로운 이미지를 주어진 디렉토리에 업로드하고 해당 이미지의 S3 URL을 반환합니다.</li>
-	 * </ul>
-	 *
-	 * @param deleteImageUrl 삭제할 기존 이미지의 S3 URL (String 타입)
-	 * @param newImageUrl 업로드할 새로운 이미지 파일 (MultipartFile 타입)
-	 * @param dirName S3에 저장될 이미지 폴더 경로 (예: "profile", "images/uploads/")
-	 * @return 업로드된 파일의 S3 URL을 반환합니다.
-	 *
-	 * @Author thereisname
+	 * @param deleteImageUrl 삭제할 이미지 URL
 	 */
-	public String updateImage(String deleteImageUrl, MultipartFile newImageUrl, String dirName) {
+	private void deleteImageIfExists(String deleteImageUrl) {
 		if (deleteImageUrl != null && !deleteImageUrl.isEmpty()) {
-			removeImageFromS3(deleteImageUrl);
+			deleteImage(deleteImageUrl);
 		}
-
-		return uploadSingleImage(newImageUrl, dirName);
 	}
 
 	/**
-	 * 이미지 파일 리스트에서 null 값이나 비어있는 파일이 있는지 확인합니다.
+	 * 단일 이미지 업데이트 메서드 (단일 이미지)
 	 *
-	 * @param files 업로드할 이미지 파일 리스트 (MultipartFile 타입)
-	 * @return 모든 파일이 유효한 경우 true, null 값 또는 비어있는 파일이 하나라도 있으면 false 반환
-	 * @Author thereisname
+	 * @param deleteImageUrl 삭제할 이미지 URL
+	 * @param newImage 업로드할 새로운 이미지 파일
+	 * @param dirName 저장할 디렉토리 이름
+	 * @return 업데이트된 이미지의 S3 URL
 	 */
-	public boolean hasValidImages(List<MultipartFile> files) {
-		return files != null && !files.isEmpty() && files.stream().allMatch(file -> file != null && !file.isEmpty());
+	public String updateImage(String deleteImageUrl, MultipartFile newImage, String dirName) {
+		deleteImageIfExists(deleteImageUrl);
+		return uploadSingleImage(newImage, dirName);
 	}
 
-	// task: 주어진 파일을 S3 버킷에 업로드하는 메서드
-	private void putS3(String fileName, MultipartFile multipartFile, ObjectMetadata metadata) {
+	/**
+	 * 다중 이미지 수정 메서드
+	 *
+	 * @param deleteImageUrls 삭제할 이미지의 URL 목록
+	 * @param newImageFiles 업로드할 새로운 이미지 파일들의 리스트
+	 * @param dirName 저장할 디렉토리 이름
+	 * @param existingImageUrl 기존에 저장된 이미지 URL
+	 * @return 최종적으로 유지되거나 새로 추가된 이미지들의 URL 리스트
+	 */
+	public List<String> updateImageSet(List<String> deleteImageUrls, List<MultipartFile> newImageFiles, String dirName, String existingImageUrl) {
+		List<String> updatedUrls = new ArrayList<>(Arrays.asList(existingImageUrl.split(",")));
+
+		if (deleteImageUrls != null && !deleteImageUrls.isEmpty()) {
+			deleteImageUrls.forEach(this::deleteImageIfExists);
+			updatedUrls.removeAll(deleteImageUrls);
+		}
+
+		if (hasValidImages(newImageFiles)) {
+			updatedUrls.addAll(uploadImages(newImageFiles, dirName));
+		}
+
+		return updatedUrls;
+	}
+
+	/**
+	 * 파일 확장자 유효성 검사 메서드
+	 *
+	 * @param multipartFile 업로드할 파일
+	 */
+	private void validateFileExtension(MultipartFile multipartFile) {
+		String extension = extractFileExtension(multipartFile.getOriginalFilename());
+		List<String> allowedExtensions = Arrays.asList("png", "jpeg", "jpg");
+		if (!allowedExtensions.contains(extension.toLowerCase())) {
+			throw new CustomRuntimeException(ImageException.INVALID_FILE_EXTENSION);
+		}
+	}
+
+	/**
+	 * 파일 확장자 추출 메서드
+	 *
+	 * @param fileName 파일 이름
+	 * @return 파일 확장자
+	 */
+	private String extractFileExtension(String fileName) {
+		if (fileName != null && fileName.contains(".")) {
+			return fileName.substring(fileName.lastIndexOf(".") + 1);
+		} else {
+			throw new CustomRuntimeException(ImageException.IMAGE_NOT_EXCEPTION);
+		}
+	}
+
+	/**
+	 * 고유한 파일명 생성 메서드
+	 *
+	 * @param dirName 디렉토리 이름
+	 * @param originalFileName 원본 파일 이름
+	 * @return 고유한 파일명
+	 */
+	private String createUniqueFileName(String dirName, String originalFileName) {
+		String extension = extractFileExtension(originalFileName);
+		return dirName + "/" + UUID.randomUUID() + "." + extension;
+	}
+
+	/**
+	 * 파일 메타데이터 생성 메서드
+	 *
+	 * @param multipartFile 파일
+	 * @return 파일 메타데이터
+	 */
+	private ObjectMetadata createMetadata(MultipartFile multipartFile) {
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setContentType(multipartFile.getContentType());
+		metadata.setContentLength(multipartFile.getSize());
+		return metadata;
+	}
+
+	/**
+	 * 파일을 S3에 업로드하는 메서드
+	 *
+	 * @param fileName 파일 이름
+	 * @param multipartFile 업로드할 파일
+	 * @param metadata 파일 메타데이터
+	 */
+	private void uploadFileToS3(String fileName, MultipartFile multipartFile, ObjectMetadata metadata) {
 		try {
 			// S3에 파일 업로드
 			amazonS3.putObject(
@@ -254,36 +280,24 @@ public class S3ImageUpload {
 		}
 	}
 
-	// task: 한개의 이미지 삭제
-	private void removeImageFromS3(String fileUrl) {
-		try {
-			amazonS3.deleteObject(
-				bucketName, fileUrl.substring(fileUrl.indexOf(".com") + 5)
-			);
-		} catch (AmazonS3Exception e) {
-			log.error("Image Delete Error: {}", e.getMessage());
-			throw new CustomRuntimeException(ImageException.IMAGE_DELETE_FAIL);
-		}
+	/**
+	 * S3 URL에서 Key 추출 메서드
+	 *
+	 * @param fileUrl 파일 URL
+	 * @return S3 Key
+	 */
+	private String extractKeyFromUrl(String fileUrl) {
+		return fileUrl.substring(fileUrl.indexOf(".com") + 5);
 	}
 
-	// task: file 확장자 가져오기
-	private String extractFileExtension(String fileName) {
-		// 파일 이름이 null이거나 확장자가 없는 경우 처리
-		if (fileName != null && fileName.contains(".")) {
-			// 마지막 점(.) 이후의 문자열을 확장자로 반환
-			return fileName.substring(fileName.lastIndexOf(".") + 1);
-		} else {
-			throw new CustomRuntimeException(ImageException.IMAGE_NOT_EXCEPTION);
-		}
-	}
-
-	// task: file 확장자 검증
-	private void isAllowedFileExtension(String extension) {
-		List<String> allowedExtensions = Arrays.asList("png", "jpeg", "jpg");
-
-		// 확장자가 허용된 리스트에 있는지 검사
-		if (!allowedExtensions.contains(extension.toLowerCase())) {
-			throw new CustomRuntimeException(ImageException.INVALID_FILE_EXTENSION);
-		}
+	/**
+	 * 이미지 파일 리스트에서 null 값이나 비어있는 파일이 있는지 확인합니다.
+	 *
+	 * @param files 업로드할 이미지 파일 리스트 (MultipartFile 타입)
+	 * @return 모든 파일이 유효한 경우 true, null 값 또는 비어있는 파일이 하나라도 있으면 false 반환
+	 * @Author thereisname
+	 */
+	public boolean hasValidImages(List<MultipartFile> files) {
+		return files != null && !files.isEmpty() && files.stream().allMatch(file -> file != null && !file.isEmpty());
 	}
 }
