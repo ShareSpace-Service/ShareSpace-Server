@@ -171,8 +171,17 @@ public class MatchingService {
 		}
 		// Guest만 수락했을 때
 		if (!matching.isHostCompleted() && matching.isGuestCompleted()) {
-			notificationService.sendNotification(matching.getProduct().getUser().getId(),
+			notificationService.sendNotification(matching.getPlace().getUser().getId(),
 				GUEST_COMPLETED_KEEPING.format(matching.getPlace().getUser().getNickName()));
+		}
+
+		// 둘 다 수락됐으면
+		if (matching.isHostCompleted() && matching.isGuestCompleted()){
+			// TODO : 최적화 필요할 듯, 메서드 두 번 호출이 아니라 다중 userId를 Arguments로 받을 수 있게끔
+			notificationService.sendNotification(matching.getProduct().getUser().getId(),
+				BOTH_COMPLETED_KEEPING.getMessage());
+			notificationService.sendNotification(matching.getPlace().getUser().getId(),
+				BOTH_COMPLETED_KEEPING.getMessage());
 		}
 		return baseResponseService.getSuccessResponse();
 	}
@@ -266,6 +275,7 @@ public class MatchingService {
 
 		matchingRepository.save(matching);
 		// TODO : 취소 당한 상대에게 알림이 발송되어야 함
+		// notificationService.
 		return baseResponseService.getSuccessResponse();
 	}
 
