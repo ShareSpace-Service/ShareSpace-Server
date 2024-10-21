@@ -1,9 +1,5 @@
 package com.sharespace.sharespace_server.note.service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,12 +50,7 @@ public class NoteService {
 		User user = findUserById(2L);
 
 		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(user.getId()).stream()
-			.map(note -> NoteResponse.builder()
-				.noteId(note.getId())
-				.title(note.getTitle())
-				.content(note.getContent())
-				.sender(note.getSender().getNickName())
-				.build())
+			.map(NoteResponse::toNoteResponse)
 			.collect(Collectors.toList());
 
 		return baseResponseService.getSuccessResponse(noteResponsesList);
@@ -67,34 +58,12 @@ public class NoteService {
 
 	@Transactional
 	public BaseResponse<String> createNote(NoteRequest noteRequest) {
-		// User Id 불러오기
-		User sender = findUserById(4L);
-
+		User sender = findUserById(1L);
 		User receiver = findUserById(noteRequest.getReceiverId());
 
-		Long placeUserId = sender.getRole().equals(Role.ROLE_HOST) ? sender.getId() : receiver.getId();
-		Long placeId = placeRepository.findByUserId(placeUserId)
-			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING)).getId();
+		validateMatchingBetweenUsers(sender, receiver);
 
-		Long productUserId = sender.getRole().equals(Role.ROLE_HOST) ? receiver.getId() : sender.getId();
-		List<Long> productIds = productRepository.findAllByUserId(productUserId).stream()
-			.map(Product::getId)
-			.toList();
-
-		Matching matching = matchingRepository.findByProductIdInAndPlaceId(productIds, placeId);
-
-		if (matching == null) {
-			throw new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING);
-		}
-
-		Note note = Note.builder()
-			.sender(sender)
-			.receiver(receiver)
-			.title(noteRequest.getTitle())
-			.content(noteRequest.getContent())
-			.send_at(LocalDateTime.now())
-			.build();
-
+		Note note = Note.create(sender, receiver, noteRequest.getTitle(), noteRequest.getContent());
 		noteRepository.save(note);
 
 		// Receiver에게 알림 전송
@@ -104,28 +73,16 @@ public class NoteService {
 
 	@Transactional
 	public BaseResponse<String> deleteNote(Long noteId) {
-		// 쪽지 존재 여부 확인
-		if (!noteRepository.existsById(noteId)) {
-			throw new CustomRuntimeException(NoteException.NOTE_NOT_FOUND);
-		}
-
-		noteRepository.deleteById(noteId);
+		Note note = findNoteById(noteId);
+		noteRepository.delete(note);
 
 		return baseResponseService.getSuccessResponse("쪽지 삭제 성공");
 	}
 
 	@Transactional
 	public BaseResponse<NoteDetailResponse> getNoteDetail(Long noteId) {
-		Note note = noteRepository.findById(noteId)
-			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_FOUND));
-
-		NoteDetailResponse noteDetailResponse = NoteDetailResponse.builder()
-			.noteId(noteId)
-			.title(note.getTitle())
-			.content(note.getContent())
-			.sender(note.getSender().getNickName())
-			.senderTime(note.getSend_at().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
-			.build();
+		Note note = findNoteById(noteId);
+		NoteDetailResponse noteDetailResponse = NoteDetailResponse.from(note);
 
 		return baseResponseService.getSuccessResponse(noteDetailResponse);
 	}
@@ -133,18 +90,15 @@ public class NoteService {
 	@Transactional
 	public BaseResponse<List<NoteSenderListResponse>> getSenderList() {
 		User user = findUserById(1L);
-
 		List<Long> userIds = getUserIdsByRole(user);
+
 		if (userIds.isEmpty()) {
 			throw new CustomRuntimeException(NoteException.SENDER_NOT_FOUND);
 		}
 
 		List<NoteSenderListResponse> users = userRepository.findAllById(userIds)
 			.stream()
-			.map(sender -> NoteSenderListResponse.builder()
-				.receiverId(sender.getId())
-				.nickname(sender.getNickName())
-				.build())
+			.map(NoteSenderListResponse::toNoteSenderListResponse)
 			.toList();
 
 		return baseResponseService.getSuccessResponse(users);
@@ -155,50 +109,51 @@ public class NoteService {
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 	}
 
-	private List<Long> getUserIdsByRole(User user) {
-		if (user.getRole().equals(Role.ROLE_HOST)) {
-			return getUserIdsForHost(user);
-		} else if (user.getRole().equals(Role.ROLE_GUEST)) {
-			return getUserIdsForGuest(user);
+	private Note findNoteById(Long noteId) {
+		return noteRepository.findById(noteId)
+			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_FOUND));
+	}
+
+	private void validateMatchingBetweenUsers(User sender, User receiver) {
+		if (sender.getRole() == Role.ROLE_HOST && receiver.getRole() == Role.ROLE_GUEST) {
+			validateMatchingForHostAndGuest(sender, receiver);
 		}
-		return Collections.emptyList();
+		if (sender.getRole() == Role.ROLE_GUEST && receiver.getRole() == Role.ROLE_HOST) {
+			validateMatchingForHostAndGuest(receiver, sender);
+		}
+	}
+
+	private void validateMatchingForHostAndGuest(User host, User guest) {
+		Long placeId = placeRepository.findByUserId(host.getId())
+			.map(Place::getId)
+			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING));
+
+		List<Long> productIds = productRepository.findAllByUserId(guest.getId()).stream()
+			.map(Product::getId)
+			.collect(Collectors.toList());
+
+		List<Matching> matchingList = matchingRepository.findAllByProductIdInAndPlaceId(productIds, placeId);
+
+		if (matchingList.isEmpty()) {
+			throw new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING);
+		}
+	}
+
+	private List<Long> getUserIdsByRole(User user) {
+		return user.getRole() == Role.ROLE_HOST ? getUserIdsForHost(user) : getUserIdsForGuest(user);
 	}
 
 	private List<Long> getUserIdsForHost(User user) {
-		// user가 등록한 place 테이블 내 placeId 불러오기
-		List<Long> placesId = placeRepository.findAllByUserId(user.getId())
+		return matchingRepository.findAllByPlaceUserIdAndStatusIn(user.getId(), List.of(Status.PENDING, Status.STORED))
 			.stream()
-			.map(Place::getId)
-			.collect(Collectors.toList());
-
-		// place Id가 matching table 내 있는지 확인. 단, status가 '보관 대기중', '보관중' 인 경우에만 가능
-		List<Matching> matchings = matchingRepository.findAllByPlaceIdInAndStatusIn(
-			placesId,
-			Arrays.asList(Status.PENDING, Status.STORED)
-		);
-
-		// 찾은 matching Id를 바탕으로 product Id를 찾아 guest 정보 가져오기
-		return matchings.stream()
 			.map(matching -> matching.getProduct().getUser().getId())
 			.distinct()
 			.collect(Collectors.toList());
 	}
 
 	private List<Long> getUserIdsForGuest(User user) {
-		// user가 등록한 product 테이블 내 productId 불러오기
-		List<Long> productId = productRepository.findAllByUserId(user.getId())
+		return matchingRepository.findAllByProductUserIdAndStatusIn(user.getId(), List.of(Status.PENDING, Status.STORED))
 			.stream()
-			.map(Product::getId)
-			.toList();
-
-		// place Id가 matching table 내 있는지 확인. 단, status가 '보관 대기중', '보관중' 인 경우에만 가능
-		List<Matching> matchings = matchingRepository.findAllByProductIdInAndStatusIn(
-			productId,
-			Arrays.asList(Status.PENDING, Status.STORED)
-		);
-
-		// 찾은 matching Id를 바탕으로 product Id를 찾아 guest 정보 가져오기
-		return matchings.stream()
 			.map(matching -> matching.getPlace().getUser().getId())
 			.distinct()
 			.collect(Collectors.toList());

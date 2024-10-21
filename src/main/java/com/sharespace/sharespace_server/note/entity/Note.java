@@ -53,4 +53,14 @@ public class Note {
 		this.content = content;
 		this.send_at = send_at;
 	}
+
+	public static Note create(User sender, User receiver, String title, String content) {
+		return Note.builder()
+			.sender(sender)
+			.receiver(receiver)
+			.title(title)
+			.content(content)
+			.send_at(LocalDateTime.now())
+			.build();
+	}
 }
