@@ -11,6 +11,6 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class MatchingShowRequestDetailResponse {
-	ProductRequestedDetailResponse productRequestedDetailResponse;
-	PlaceRequestedDetailResponse placeRequestedDetailResponse;
+	ProductRequestedDetailResponse product;
+	PlaceRequestedDetailResponse place;
 }
