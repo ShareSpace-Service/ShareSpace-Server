@@ -3,14 +3,12 @@ package com.sharespace.sharespace_server.jwt.entity;
 import com.sharespace.sharespace_server.jwt.domain.Jwt;
 import com.sharespace.sharespace_server.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Getter
+@Setter
 @Table(name = "token", schema = "sharespace")
 public class Token {
 
