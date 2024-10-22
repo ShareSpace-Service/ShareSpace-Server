@@ -74,8 +74,10 @@ public class MatchingController {
 
 	}
 
+	// 보관 대기중일 때, Host와 Guest는 '요청 취소'를 할 수 있다.
 	@PostMapping("/cancelRequest")
-	public BaseResponse<Void> cancelRequest(@RequestParam("matchingId") Long matchingId) {
+	public BaseResponse<Void> cancelRequest(@RequestParam("matchingId") Long matchingId/*, HttpServletRequest request*/) {
+		//Long userId = RequestParser.extractUserId(request);
 		return matchingService.cancelRequest(matchingId);
 	}
 
