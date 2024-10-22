@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.matching.entity;
 
+import static com.sharespace.sharespace_server.global.enums.Status.*;
+
 import java.time.LocalDateTime;
 
 import com.sharespace.sharespace_server.global.enums.Status;
@@ -14,6 +16,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,11 +37,11 @@ public class Matching {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "product_id", nullable = false)
 	private Product product;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "place_id", nullable = false)
 	private Place place;
 
@@ -57,12 +60,15 @@ public class Matching {
 
 	private LocalDateTime startDate;
 
+	private LocalDateTime expiryDate;
+
 	public static Matching create(Product product, Place place) {
 		Matching matching = new Matching();
 		matching.setProduct(product);
 		matching.setPlace(place);
 		matching.setStatus(Status.REQUESTED);
 		matching.setStartDate(LocalDateTime.now());
+		matching.setExpiryDate(LocalDateTime.now().plusDays(product.getPeriod()));
 
 		Integer distance = calculateDistance(product.getUser(), place.getUser());
 		matching.setDistance(distance);
@@ -107,15 +113,16 @@ public class Matching {
 			throw new CustomRuntimeException(MatchingException.REQUEST_CANCELLATION_NOT_ALLOWED);
 		}
 
-		// 물품 배정 상태를 변경
+		// 물품 배정 상태 변경
 		this.product.unassign();
-
+		this.setStatus(UNASSIGNED);
+		this.setPlace(null);
 		// 유저 역할에 따른 상태 변경
-		if (user.getRole().getValue().equals("GUEST")) {
-			this.setStatus(Status.UNASSIGNED);  // GUEST가 취소할 경우
-		} else if (user.getRole().getValue().equals("HOST")) {
-			this.setStatus(Status.REJECTED);  // HOST가 취소할 경우
-		}
+		// if (user.getRole().getValue().equals("GUEST")) {
+		// 	this.setStatus(UNASSIGNED);  // GUEST가 취소할 경우
+		// } else if (user.getRole().getValue().equals("HOST")) {
+		// 	this.setStatus(Status.REJECTED);  // HOST가 취소할 경우
+		// }
 	}
 
 	public void confirmStorageByGuest() {
