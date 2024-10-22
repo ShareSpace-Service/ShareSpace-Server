@@ -32,6 +32,20 @@ public class JwtService {
     private final BaseResponseService baseResponseService;
 
     @Transactional
+    public Jwt refreshTokens(User user) {
+
+        // 기존 refresh token을 업데이트하거나 필요한 경우 DB에 저장
+        Token token = tokenJpaRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        tokenJpaRepository.delete(token);
+
+        // 새로운 JWT 생성
+        Jwt newToken = createTokens(user.getId(), user);
+
+        return newToken;  // 생성된 JWT 반환
+    }
+
+    @Transactional
     public Jwt createTokens(Long userId, User user) {
         validateMember(userId);
         Jwt jwt = jwtProvider.generateJwtPair(Collections.singletonMap("userId", userId));

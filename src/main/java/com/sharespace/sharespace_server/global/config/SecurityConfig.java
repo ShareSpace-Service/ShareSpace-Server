@@ -2,6 +2,7 @@ package com.sharespace.sharespace_server.global.config;
 
 import com.sharespace.sharespace_server.global.filter.JwtAuthenticationFilter;
 import com.sharespace.sharespace_server.global.filter.LoginFilter;
+import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.JwtService;
 import com.sharespace.sharespace_server.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +37,8 @@ public class SecurityConfig{
     }
 
     @Bean
-    public LoginFilter loginFilter(AuthenticationManager authenticationManager, UserService userService) {
-        LoginFilter loginFilter = new LoginFilter(authenticationManager, jwtService, userService);
+    public LoginFilter loginFilter(AuthenticationManager authenticationManager, UserService userService, TokenJpaRepository tokenJpaRepository) {
+        LoginFilter loginFilter = new LoginFilter(authenticationManager, jwtService, userService, tokenJpaRepository);
         loginFilter.setFilterProcessesUrl("/user/login"); // 로그인 엔드포인트 설정
         return loginFilter;
     }

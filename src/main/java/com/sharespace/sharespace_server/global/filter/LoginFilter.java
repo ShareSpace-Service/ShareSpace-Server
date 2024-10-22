@@ -2,6 +2,8 @@ package com.sharespace.sharespace_server.global.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sharespace.sharespace_server.jwt.domain.Jwt;
+import com.sharespace.sharespace_server.jwt.entity.Token;
+import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.JwtService;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.service.UserService;
@@ -28,8 +30,10 @@ import java.util.Map;
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtService jwtService;
     private final UserService userService;
+    private final TokenJpaRepository tokenJpaRepository;
 
-    public LoginFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
+    public LoginFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, TokenJpaRepository tokenJpaRepository) {
+        this.tokenJpaRepository = tokenJpaRepository;
         setAuthenticationManager(authenticationManager); // AuthenticationManager 설정
         this.jwtService = jwtService;
         this.userService = userService;
@@ -65,7 +69,17 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) throws IOException {
         User user = (User)authResult.getPrincipal();
-        Jwt token = jwtService.createTokens(user.getId(), user);
+
+        Token existingToken = tokenJpaRepository.findByUserId(user.getId()).orElse(null);
+
+        Jwt token;
+        if (existingToken != null) {
+            // 기존 refresh token이 존재할 경우, 갱신 로직
+            token = jwtService.refreshTokens(user);
+        } else {
+            // 새로운 access token 및 refresh token 생성
+            token = jwtService.createTokens(user.getId(), user);
+        }
 
         // AccessToken 쿠키 저장
         addJwtToCookie(response, "accessToken", token.getAccessToken(), 3600); // 1시간
@@ -73,7 +87,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         addJwtToCookie(response, "refreshToken", token.getRefreshToken(), 60 * 60 * 24 * 60);  // 60일
 
         userService.loginAttemptationSuccess(obtainUsername(request));
-        Collection<? extends GrantedAuthority> authorities = authResult.getAuthorities();
 
         sendUserLoginResponse(response, HttpStatus.OK);
     }
