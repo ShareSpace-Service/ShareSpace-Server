@@ -66,16 +66,13 @@ public class MatchingService {
 	 * @return BaseResponse<List<MatchingShowAllResponse>> - 모든 매칭 정보 리스트를 담은 응답 객체
 	 */
 	
-	// TODO : N+1 문제 해결해야 함
+	
 	public BaseResponse<List<MatchingShowAllResponse>> showAll(Long userId) {
 		User user = findUser(userId);
-		List<Product> products = productRepository.findAllByUserId(userId);
-
-		// 비즈니스 로직은 서비스가 담당, DTO 생성은 어셈블러가 담당
-		List<MatchingShowAllResponse> responses = products.stream()
-			.map(matchingAssembler::toMatchingShowAllResponse)  // 어셈블러에서 DTO 생성
+		List<Matching> matchings = matchingRepository.findMatchingWithProductByUserId(userId);
+		List<MatchingShowAllResponse> responses = matchings.stream()
+			.map(matchingAssembler::toMatchingShowAllResponse)
 			.collect(Collectors.toList());
-
 		return baseResponseService.getSuccessResponse(responses);
 	}
 	/**s
@@ -203,8 +200,8 @@ public class MatchingService {
 		PlaceRequestedDetailResponse placeResponse = PlaceRequestedDetailResponse.of(matching.getPlace());
 		ProductRequestedDetailResponse productResponse = ProductRequestedDetailResponse.of(matching.getProduct());
 		MatchingShowRequestDetailResponse response = MatchingShowRequestDetailResponse.builder()
-			.placeRequestedDetailResponse(placeResponse)
-			.productRequestedDetailResponse(productResponse)
+			.place(placeResponse)
+			.product(productResponse)
 			.build();
 
 
@@ -221,11 +218,17 @@ public class MatchingService {
 	@Transactional
 	public BaseResponse<Void> hostAcceptRequest(MatchingHostAcceptRequestRequest request) {
 		// TODO : 호스트 유효성 검증 필요
+		// TODO : 메서드 리네임 => 거절할 수도 있고 수락할 수도 있으니까
 		Matching matching = findMatching(request.getMatchingId());
 		if (request.isAccepted()) {
 			matching.setStatus(PENDING);
+			// 알림 전송 로직. Guest에게 알림을 전송한다.
+			notificationService.sendNotification(matching.getProduct().getUser().getId(),
+				HOST_ACCEPTED_MATCHING_REQUEST.getMessage());
 		} else {
 			matching.setStatus(Status.REJECTED);
+			notificationService.sendNotification(matching.getProduct().getUser().getId(),
+				HOST_REJECETED_MATCHING_REQUEST.getMessage());
 		}
 		matchingRepository.save(matching);
 		return baseResponseService.getSuccessResponse();
@@ -267,15 +270,28 @@ public class MatchingService {
 	@Transactional
 	public BaseResponse<Void> cancelRequest(Long matchingId) {
 		User user = findUser(1L); // TODO : 토큰에서 유저 가져오는 것으로 변경
-
+		Long userId = user.getId(); // TODO : 매직 넘버를 사용했으므로 나중엔 Parameter에서 받아와야 함
 		Matching matching = findMatching(matchingId);
 
 		// Matching 객체에게 취소 처리 위임
 		matching.cancel(user);
 
 		matchingRepository.save(matching);
-		// TODO : 취소 당한 상대에게 알림이 발송되어야 함
-		// notificationService.
+		
+		
+		// 알림 전송 로직
+		// 1. 요청 취소 주체 찾기 => userId
+			/* 1-1. 요청 취소의 주체가 Place의 owner, 즉, Host일 경우
+			 * matching.getProduct().getUser.getId() => Guest의 userId로 알림 전송
+			 */
+		if (userId == matching.getPlace().getUser().getId()) {
+			notificationService.sendNotification(matching.getProduct().getUser().getId(), CANCELED_MATCHING.getMessage());
+		} else {
+			/* 1-2. 요청 취소의 주체가 Product의 owner, 즉, Host일 경우
+			 * matching.getPlace().getUser.getId() => Host의 userId로 알림 전송
+			 */
+			notificationService.sendNotification(matching.getPlace().getUser().getId(), CANCELED_MATCHING.getMessage());
+		}
 		return baseResponseService.getSuccessResponse();
 	}
 
@@ -294,9 +310,9 @@ public class MatchingService {
 	@Transactional
 	public BaseResponse<Void> uploadImage(MatchingUploadImageRequest request) {
 		// TODO : 유효성 검증;이미지 업로드의 주체는 Host여야 함
+		// NOTE : 이미지 업로드'만' 했다고 알림이 전송되어선 안됨
 		Matching matching = findMatching(request.getMatchingId());
 		// 다중 이미지 S3에 업로드
-
 		String imageUrl = s3ImageUpload.uploadSingleImage(request.getImageUrl(), "matching/" +matching.getId());
 		matching.setImage(imageUrl);
 		matchingRepository.save(matching);
