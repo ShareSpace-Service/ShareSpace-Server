@@ -28,8 +28,7 @@ public class PlaceRequestedDetailResponse {
 			.image(List.of(place.getImageUrl().split(",")))
 			.category(place.getCategory())
 			.period(place.getPeriod())
+			.description(place.getDescription())
 			.build();
 	}
-
-
 }
