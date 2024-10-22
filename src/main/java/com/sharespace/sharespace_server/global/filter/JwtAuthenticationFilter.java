@@ -22,7 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-import static com.sharespace.sharespace_server.global.utils.RequestParser.extractUserIdFromToken;
+import static com.sharespace.sharespace_server.global.utils.RequestParser.*;
 
 @Component
 @RequiredArgsConstructor
@@ -30,9 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
 
-    private final String[] whiteListUris = new String[] {"/**"};
-//            {"/login",
-//            "/user/login", "user/register"};
+    private final String[] whiteListUris = new String[] {"/login", "/user/login", "user/register"};
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -43,43 +41,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-//        String authorizationHeader = request.getHeader(AUTHORIZATION);
-//
-//        if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
-//            String jwt = extractAccessToken(request);
-//            try {
-//                Authentication authentication = jwtProvider.getAuthentication(jwt);
-//                SecurityContextHolder.getContext().setAuthentication(authentication);
-//            } catch (Exception e) {
-//                sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.MALFORMED_JWT_EXCEPTION));
-//                return;
-//            }
-//        }
-//        String token = extractAccessToken(request);
-//        request.setAttribute("userId", extractUserIdFromToken(jwtProvider.getClaims(token)));
-//        filterChain.doFilter(request, response);
-//        // 블랙리스트 필터 2024-07-30
+        String authorizationHeader = request.getHeader(AUTHORIZATION);
 
-        String jwt = getJwtFromCookies(request, "accessToken");
-
-        if (jwt != null) {
+        if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
+            String jwt = extractAccessToken(request);
+            request.setAttribute("userId", extractUserIdFromToken(jwtProvider.getClaims(jwt)));
             try {
-                // Claims 가져오기 (유효성 검증 포함)
-                jwtProvider.getClaims(jwt); // 유효하지 않으면 예외 발생
-
-                // Authentication 설정
                 Authentication authentication = jwtProvider.getAuthentication(jwt);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                // userId 설정 (선택 사항)
-                Long userId = extractUserIdFromToken(jwtProvider.getClaims(jwt));
-                request.setAttribute("userId", userId);
-            } catch (RuntimeException e) {
-                sendJwtExceptionResponse(response, e);
+            } catch (Exception e) {
+                sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.MALFORMED_JWT_EXCEPTION));
                 return;
             }
         }
-
         filterChain.doFilter(request, response);
     }
 
