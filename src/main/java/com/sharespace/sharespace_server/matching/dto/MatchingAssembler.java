@@ -18,9 +18,9 @@ public class MatchingAssembler {
 
 	private final MatchingRepository matchingRepository;
 
-	public MatchingShowAllResponse toMatchingShowAllResponse(Product product) {
-		List<String> imageUrls = List.of(product.getImageUrl().split(","));
-
+	public MatchingShowAllResponse toMatchingShowAllResponse(Matching matching) {
+		Product product = matching.getProduct();
+		List<String> imageUrls = List.of(matching.getProduct().getImageUrl().split(","));
 		if (!product.getIsPlaced()) {
 			return MatchingShowAllResponse.builder()
 				.matchingId(null)
@@ -31,7 +31,6 @@ public class MatchingAssembler {
 				.distance(null)
 				.build();
 		} else {
-			Matching matching = matchingRepository.findByProductId(product.getId());
 			return MatchingShowAllResponse.builder()
 				.matchingId(matching.getId())
 				.title(product.getTitle())
