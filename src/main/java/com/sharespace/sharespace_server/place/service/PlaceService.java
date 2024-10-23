@@ -1,10 +1,7 @@
 package com.sharespace.sharespace_server.place.service;
 
-import static com.sharespace.sharespace_server.global.utils.LocationTransform.*;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -73,12 +70,13 @@ public class PlaceService {
 	 * 포함한 PlacesResponse 리스트로 변환하여 반환합니다.</p>
 	 *
 	 * @param productId 상품 ID (Long 타입)
+	 * @param userId
 	 * @return 상품 카테고리에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트를 성공 응답 형태로 반환합니다.
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(Long productId) {
-		User guest = findByUser(2L);
+	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(Long productId, Long userId) {
+		User guest = findByUser(userId);
 		Product product = findProductById(productId);
 
 		List<Category> categories = product.getCategory().getRelatedCategories();
@@ -113,13 +111,14 @@ public class PlaceService {
 	 * 예외를 발생시킵니다. 또한, 이미지 업로드를 처리하며, 이미지가 없거나 유효하지 않을 경우에도 예외를 발생시킵니다.</p>
 	 *
 	 * @param placeRequest 장소 생성에 필요한 요청 데이터 (PlaceRequest 타입)
+	 * @param userId
 	 * @return 성공적으로 생성된 장소에 대한 성공 메시지를 반환합니다.
 	 * @throws CustomRuntimeException 동일한 사용자 ID로 이미 장소가 등록경우, 이미지가 유효하지 않거나 누락된 경우 발생합니다.
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> createPlace(PlaceRequest placeRequest) {
-		User user = findByUser(1L);
+	public BaseResponse<String> createPlace(PlaceRequest placeRequest, Long userId) {
+		User user = findByUser(userId);
 
 		validatePlaceDoesNotExist(user.getId());
 
@@ -144,15 +143,14 @@ public class PlaceService {
 	 * 갱신하며, 장소의 기타 필드들도 요청된 값으로 변경됩니다.</p>
 	 *
 	 * @param placeRequest 장소 업데이트에 필요한 요청 데이터 (PlaceUpdateRequest 타입)
+	 * @param userId
 	 * @return 장소 수정에 대한 성공 메시지를 반환합니다.
-	 *
-	 * @throws CustomRuntimeException  해당 사용자 ID로 등록된 장소가 존재하지 않는 경우 PLACE_NOT_FOUND 예외가 발생합니다.
-	 *
+	 * @throws CustomRuntimeException 해당 사용자 ID로 등록된 장소가 존재하지 않는 경우 PLACE_NOT_FOUND 예외가 발생합니다.
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> updatePlace(PlaceUpdateRequest placeRequest) {
-		User user = findByUser(1L);
+	public BaseResponse<String> updatePlace(PlaceUpdateRequest placeRequest, Long userId) {
+		User user = findByUser(userId);
 
 		Place place = findPlaceByUserId(user.getId());
 

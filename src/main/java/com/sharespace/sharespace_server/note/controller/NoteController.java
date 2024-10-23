@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sharespace.sharespace_server.global.response.BaseResponse;
+import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.note.dto.NoteDetailResponse;
 import com.sharespace.sharespace_server.note.dto.NoteRequest;
 import com.sharespace.sharespace_server.note.dto.NoteResponse;
 import com.sharespace.sharespace_server.note.dto.NoteSenderListResponse;
 import com.sharespace.sharespace_server.note.service.NoteService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +31,15 @@ public class NoteController {
 	private final NoteService noteService;
 
 	@GetMapping
-	public BaseResponse<List<NoteResponse>> getNote() {
-		return noteService.getNote();
+	public BaseResponse<List<NoteResponse>> getNote(HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return noteService.getNote(userId);
 	}
 
 	@PostMapping
-	public  BaseResponse<String> createNote(@Valid @RequestBody NoteRequest noteRequest) {
-		return noteService.createNote(noteRequest);
+	public  BaseResponse<String> createNote(@Valid @RequestBody NoteRequest noteRequest, HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return noteService.createNote(noteRequest, userId);
 	}
 
 	@DeleteMapping
@@ -49,7 +53,8 @@ public class NoteController {
 	}
 
 	@GetMapping("/available")
-	public BaseResponse<List<NoteSenderListResponse>> getSenderList() {
-		return noteService.getSenderList();
+	public BaseResponse<List<NoteSenderListResponse>> getSenderList(HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return noteService.getSenderList(userId);
 	}
 }
