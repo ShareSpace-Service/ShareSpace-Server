@@ -1,6 +1,8 @@
 package com.sharespace.sharespace_server.global.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
+import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.jwt.domain.Jwt;
 import com.sharespace.sharespace_server.jwt.entity.Token;
 import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
@@ -30,10 +32,8 @@ import java.util.Map;
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtService jwtService;
     private final UserService userService;
-    private final TokenJpaRepository tokenJpaRepository;
 
-    public LoginFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, TokenJpaRepository tokenJpaRepository) {
-        this.tokenJpaRepository = tokenJpaRepository;
+    public LoginFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
         setAuthenticationManager(authenticationManager); // AuthenticationManager 설정
         this.jwtService = jwtService;
         this.userService = userService;
@@ -46,6 +46,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         // 클라이언트 요청에서 email, password 추출
         String email = obtainUsername(request);
         String password = obtainPassword(request);
+
+//        userService.loginAttemptaionCheck(email);
 
         if (!userService.checkAccountLocked(email)) {
             // 해당 멤버의 계정이 잠겨있는지 확인하고, 계정이 잠겨있지 않으면 인증 토큰을 만든다.
@@ -69,17 +71,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) throws IOException {
         User user = (User)authResult.getPrincipal();
-
-        Token existingToken = tokenJpaRepository.findByUserId(user.getId()).orElse(null);
-
-        Jwt token;
-        if (existingToken != null) {
-            // 기존 refresh token이 존재할 경우, 갱신 로직
-            token = jwtService.refreshTokens(user);
-        } else {
-            // 새로운 access token 및 refresh token 생성
-            token = jwtService.createTokens(user.getId(), user);
-        }
+        Jwt token = jwtService.checkUserToken(user);
 
         // AccessToken 쿠키 저장
         addJwtToCookie(response, token.getAccessToken(), "accessToken",3600); // 1시간

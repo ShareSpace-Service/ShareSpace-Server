@@ -105,8 +105,8 @@ public class UserService {
 
     // 회원 정보 수정
     @Transactional
-    public BaseResponse<Void> update(UserUpdateRequest request) {
-        User user = userRepository.findById(request.getUserId()).orElseThrow(
+    public BaseResponse<Void> update(UserUpdateRequest request, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(
                 () -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND)
         );
 
@@ -158,14 +158,14 @@ public class UserService {
     @Transactional
     public BaseResponse<Void> logout(String accessToken, String refreshToken, HttpServletResponse response, Long userId) {
 
+        Token token = tokenJpaRepository.findByUserId(userId).orElseThrow(() -> new CustomRuntimeException(JwtException.REFRESH_TOKEN_NOT_FOUND_EXCEPTION));
+
         // 1. AccessToken 블랙리스트에 추가
         tokenBlacklistService.addToBlacklist(accessToken);
 
         // 2. 쿠키 만료 처리
         expireCookie(response, "accessToken");
         expireCookie(response, "refreshToken");
-
-        Token token = tokenJpaRepository.findByUserId(userId).orElseThrow(() -> new CustomRuntimeException(JwtException.REFRESH_TOKEN_NOT_FOUND_EXCEPTION));
 
         tokenJpaRepository.delete(token);
 
@@ -272,8 +272,17 @@ public class UserService {
         return false;
     }
 
-    // 로그인 시도 실패 로직
+//    // 로그인 시도 검증 로직
+//    public void loginAttemptaionCheck(String email) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+//
+//        if (!user.getEmailValidated()) {
+//            throw new CustomRuntimeException(UserException.EMAIL_NOT_VALIDATED);
+//        }
+//    }
 
+    // 로그인 시도 실패 후 로직
     public void loginAttemptationFailed(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
@@ -292,16 +301,6 @@ public class UserService {
         user.setFailedAttempts(0);
         user.setLockTime(null);
         userRepository.save(user);
-    }
-
-    // 로그인 성공시 JWT를 쿠키에 저장한다.
-    public void addJwtToCookie(HttpServletResponse response, String jwtToken, String cookieName) {
-        Cookie cookie = new Cookie(cookieName, jwtToken);
-        cookie.setHttpOnly(false);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 120); // 2시간
-        response.addCookie(cookie);
     }
 
     private void expireCookie(HttpServletResponse response, String tokenName) {

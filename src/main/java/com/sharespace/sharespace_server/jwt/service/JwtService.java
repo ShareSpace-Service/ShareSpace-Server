@@ -57,6 +57,22 @@ public class JwtService {
         return jwt;
     }
 
+    @Transactional
+    public Jwt checkUserToken(User user) {
+        Token existingToken = tokenJpaRepository.findByUserId(user.getId()).orElse(null);
+
+        Jwt token;
+        if (existingToken != null) {
+            // 기존 refresh token이 존재할 경우, 갱신 로직
+            token = refreshTokens(user);
+        } else {
+            // 새로운 access token 및 refresh token 생성
+            token = createTokens(user.getId(), user);
+        }
+
+        return token;
+    }
+
     public BaseResponse<HttpStatus> reissueAccessToken(String refreshToken, HttpServletResponse response) {
 
         try {
