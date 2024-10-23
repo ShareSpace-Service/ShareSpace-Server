@@ -31,8 +31,9 @@ public class UserController {
     }
 
     @PutMapping("/update")
-    public BaseResponse<Void> update(@Valid @ModelAttribute UserUpdateRequest request) {
-        return userService.update(request);
+    public BaseResponse<Void> update(@Valid @ModelAttribute UserUpdateRequest request, HttpServletRequest httpRequest) {
+        Long userId = extractUserId(httpRequest);
+        return userService.update(request, userId);
     }
 
     @GetMapping("/place")
