@@ -8,7 +8,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class NotificationAllResponse {
-    private Long notifcationId;
+    private Long notificationId;
     private String message;
     private Integer timeElapsed;
     private boolean isRead;
