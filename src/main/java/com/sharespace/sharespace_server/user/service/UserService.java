@@ -105,8 +105,8 @@ public class UserService {
 
     // 회원 정보 수정
     @Transactional
-    public BaseResponse<Void> update(UserUpdateRequest request) {
-        User user = userRepository.findById(request.getUserId()).orElseThrow(
+    public BaseResponse<Void> update(UserUpdateRequest request, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(
                 () -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND)
         );
 
