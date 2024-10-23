@@ -45,7 +45,7 @@ public class UserService {
     private final BaseResponseService baseResponseService;
     private final LocationTransform locationTransform;
     private final BCryptPasswordEncoder encoder;
-    JavaMailSender javaMailSender;
+    private final JavaMailSender javaMailSender;
     private final Map<String, Integer> verificationCodes = new ConcurrentHashMap<>();
     private final S3ImageUpload s3ImageUpload;
     private final TokenBlacklistService tokenBlacklistService;
