@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sharespace.sharespace_server.global.response.BaseResponse;
+import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
 import com.sharespace.sharespace_server.place.dto.PlaceRequest;
 import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.place.dto.PlacesResponse;
 import com.sharespace.sharespace_server.place.service.PlaceService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +38,9 @@ public class PlaceController {
 
 	// task: product 카테고리에 맞는 장소 리스트 조회
 	@GetMapping("/searchByProduct")
-	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(@RequestParam Long productId) {
-		return placeService.getLocationOptionsForItem(productId);
+	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(@RequestParam Long productId, HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return placeService.getLocationOptionsForItem(productId, userId);
 	}
 
 	// task: 장소 디테일 조회
@@ -48,13 +51,15 @@ public class PlaceController {
 
 	// task: 장소 등록
 	@PostMapping
-	public BaseResponse<String> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest) {
-		return placeService.createPlace(placeRequest);
+	public BaseResponse<String> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest,  HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return placeService.createPlace(placeRequest, userId);
 	}
 
 	// task: 장소 수정
 	@PutMapping
-	public BaseResponse<String> updatePlace(@Valid @ModelAttribute PlaceUpdateRequest placeRequest) {
-		return placeService.updatePlace(placeRequest);
+	public BaseResponse<String> updatePlace(@Valid @ModelAttribute PlaceUpdateRequest placeRequest, HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return placeService.updatePlace(placeRequest, userId);
 	}
 }

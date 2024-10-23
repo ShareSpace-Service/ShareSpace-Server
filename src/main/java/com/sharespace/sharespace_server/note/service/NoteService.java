@@ -46,8 +46,8 @@ public class NoteService {
 	private final NotificationService notificationService;
 
 	@Transactional
-	public BaseResponse<List<NoteResponse>> getNote() {
-		User user = findUserById(2L);
+	public BaseResponse<List<NoteResponse>> getNote(Long userId) {
+		User user = findUserById(userId);
 
 		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(user.getId()).stream()
 			.map(NoteResponse::toNoteResponse)
@@ -57,8 +57,8 @@ public class NoteService {
 	}
 
 	@Transactional
-	public BaseResponse<String> createNote(NoteRequest noteRequest) {
-		User sender = findUserById(1L);
+	public BaseResponse<String> createNote(NoteRequest noteRequest, Long userId) {
+		User sender = findUserById(userId);
 		User receiver = findUserById(noteRequest.getReceiverId());
 
 		validateMatchingBetweenUsers(sender, receiver);
@@ -88,8 +88,8 @@ public class NoteService {
 	}
 
 	@Transactional
-	public BaseResponse<List<NoteSenderListResponse>> getSenderList() {
-		User user = findUserById(1L);
+	public BaseResponse<List<NoteSenderListResponse>> getSenderList(Long userId) {
+		User user = findUserById(userId);
 		List<Long> userIds = getUserIdsByRole(user);
 
 		if (userIds.isEmpty()) {
