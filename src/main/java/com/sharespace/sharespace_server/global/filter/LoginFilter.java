@@ -82,9 +82,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         }
 
         // AccessToken 쿠키 저장
-        addJwtToCookie(response, "accessToken", token.getAccessToken(), 3600); // 1시간
+        addJwtToCookie(response, token.getAccessToken(), "accessToken",3600); // 1시간
         // RefreshToken 쿠키 저장
-        addJwtToCookie(response, "refreshToken", token.getRefreshToken(), 60 * 60 * 24 * 60);  // 60일
+        addJwtToCookie(response, token.getRefreshToken(), "refreshToken", 60 * 60 * 24 * 60);  // 60일
 
         userService.loginAttemptationSuccess(obtainUsername(request));
 
