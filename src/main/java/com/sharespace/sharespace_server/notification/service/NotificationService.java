@@ -13,6 +13,7 @@ import com.sharespace.sharespace_server.global.exception.error.NotificationExcep
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
+import com.sharespace.sharespace_server.notification.dto.response.NotificationResponse;
 import com.sharespace.sharespace_server.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +36,7 @@ public class NotificationService {
 	private final NotificationRepository notificationRepository;
 	private final BaseResponseService baseResponseService;
 	public SseEmitter subscribe(Long userId) {
-		SseEmitter emitter = new SseEmitter();
+		SseEmitter emitter = new SseEmitter(30000000L);
 		sseEmitters.put(userId, emitter);
 		// 기본적으로 연결 유지
 		try {
@@ -61,14 +62,18 @@ public class NotificationService {
 		SseEmitter emitter = sseEmitters.get(userId);
 		if (emitter != null) {
 			try {
+				NotificationResponse response = NotificationResponse.builder()
+					.notificationId(notification.getId())
+					.message(message)
+					.build();
 				emitter.send(SseEmitter.event()
 					.name("NOTIFICATION")
-					.data(message));
+					.data(response));
 			} catch (IOException e) {
 				emitter.completeWithError(e);
 				sseEmitters.remove(userId);
 			}
-		} // TODO : emitter가 존재하지 않을 때 예외처리 필요
+		}
 	}
 
 	public BaseResponse<List<NotificationAllResponse>> getNotifications(Long userId) {
@@ -80,10 +85,10 @@ public class NotificationService {
 		LocalDateTime now = LocalDateTime.now();
 		for (Notification notification : notificationList) {
 			Duration duration = Duration.between(notification.getCreatedAt(), now);
-			int timeElapsed = (int) duration.toHours();
+			int timeElapsed = (int) duration.toMinutes();
 
 			NotificationAllResponse notificationResponse = NotificationAllResponse.builder()
-					.notifcationId(notification.getId())
+					.notificationId(notification.getId())
 					.isRead(notification.isRead())
 					.timeElapsed(timeElapsed)
 					.message(notification.getMessage())

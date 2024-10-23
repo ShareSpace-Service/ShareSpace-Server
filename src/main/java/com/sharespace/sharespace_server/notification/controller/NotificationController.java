@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.notification.controller;
 
+
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
 import org.springframework.http.MediaType;
@@ -21,17 +22,16 @@ public class NotificationController {
 
 	@GetMapping(value = "/sse/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public SseEmitter subscribe(@PathVariable Long userId) {
-
 		return notificationService.subscribe(userId);
 	}
 
-	@GetMapping("/")
+	@GetMapping()
 	public BaseResponse<List<NotificationAllResponse>> getNotifications() {
 		Long userId = 1L;
 		return notificationService.getNotifications(userId);
 	}
 
-	@DeleteMapping("/")
+	@DeleteMapping()
 	BaseResponse<Void> deleteNotifcation(@RequestParam Long notificationId) {
 		return notificationService.deleteNotifcation(notificationId);
 	}

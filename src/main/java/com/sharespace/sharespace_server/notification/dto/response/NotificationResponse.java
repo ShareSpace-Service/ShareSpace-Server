@@ -5,11 +5,9 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
 @AllArgsConstructor
-public class NotificationAllResponse {
-    private Long notificationId;
-    private String message;
-    private Integer timeElapsed;
-    private boolean isRead;
+@Builder
+public class NotificationResponse {
+	private Long notificationId; // 알림 ID
+	private String message; // 알림 메시지
 }
