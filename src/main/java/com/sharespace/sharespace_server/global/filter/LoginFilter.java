@@ -88,7 +88,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         userService.loginAttemptationSuccess(obtainUsername(request));
 
-        sendUserLoginResponse(response, HttpStatus.OK);
+        sendUserLoginResponseWithUserId(response, HttpStatus.OK, user.getId());
     }
 
     @Override
@@ -104,6 +104,18 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         Map<String, String> messageMap = new HashMap<>();
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(status.value()); // HttpStatus.OK.value();
+        PrintWriter out = response.getWriter();
+        out.print(new ObjectMapper().writeValueAsString(messageMap));
+        out.flush();
+    }
+
+    // userId를 추가로 전달하는 새로운 메서드
+    private void sendUserLoginResponseWithUserId(HttpServletResponse response, HttpStatus status, Long userId) throws IOException {
+        Map<String, Object> messageMap = new HashMap<>();
+        messageMap.put("userId", userId); // userId를 응답에 추가
+
+        response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(status.value());
         PrintWriter out = response.getWriter();
         out.print(new ObjectMapper().writeValueAsString(messageMap));
         out.flush();
