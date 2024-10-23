@@ -71,7 +71,7 @@ public class JwtService {
             String newAccessToken = jwtProvider.reissueAccessToken(Collections.singletonMap("userId", userId));
 
             // 새로운 accessToken을 쿠키에 저장
-            addJwtToCookie(response, "accessToken", newAccessToken, 3600);  // 예: 1시간
+            addJwtToCookie(response, newAccessToken, "accessToken", 3600);  // 예: 1시간
 
             return baseResponseService.getSuccessResponse(HttpStatus.OK);
 
