@@ -17,9 +17,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserUpdateRequest {
 
-    @NotNull
-    private Long userId;
-
     private MultipartFile image;
 
     @NotNull
