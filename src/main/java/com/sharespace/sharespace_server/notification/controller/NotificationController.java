@@ -1,7 +1,10 @@
 package com.sharespace.sharespace_server.notification.controller;
 
 
+import static com.sharespace.sharespace_server.global.utils.RequestParser.*;
+
 import com.sharespace.sharespace_server.global.response.BaseResponse;
+import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -9,6 +12,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.sharespace.sharespace_server.notification.service.NotificationService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -26,8 +30,8 @@ public class NotificationController {
 	}
 
 	@GetMapping()
-	public BaseResponse<List<NotificationAllResponse>> getNotifications() {
-		Long userId = 1L;
+	public BaseResponse<List<NotificationAllResponse>> getNotifications(HttpServletRequest request) {
+		Long userId = extractUserId(request);
 		return notificationService.getNotifications(userId);
 	}
 
