@@ -35,6 +35,12 @@ public class NotificationService {
 	private final UserRepository userRepository;
 	private final NotificationRepository notificationRepository;
 	private final BaseResponseService baseResponseService;
+
+	/**
+	 * SSE 구독 요청 처리
+	 * @param userId 구독할 유저 ID
+	 * @return SseEmitter 객체를 반환해서 SSE 연결
+	 */
 	public SseEmitter subscribe(Long userId) {
 		SseEmitter emitter = new SseEmitter(30000000L);
 		sseEmitters.put(userId, emitter);
@@ -53,6 +59,11 @@ public class NotificationService {
 		return emitter;
 	}
 
+	/**
+	 * 유저에게 알림을 보내는 메서드
+	 * @param userId 알림을 받을 유저 ID
+	 * @param message 알림 메시지 내용
+	 */
 	@Transactional
 	public void sendNotification(Long userId, String message)  {
 		User user = userRepository.findById(userId)
@@ -76,6 +87,11 @@ public class NotificationService {
 		}
 	}
 
+	/**
+	 * 유저의 모든 알림을 가져오는 메서드
+	 * @param userId 알림을 조회할 유저 ID
+	 * @return 알림 리스트와 함께 성공 응답을 반환
+	 */
 	public BaseResponse<List<NotificationAllResponse>> getNotifications(Long userId) {
 		User user = userRepository.findById(userId).
 		orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
@@ -99,6 +115,11 @@ public class NotificationService {
 		return baseResponseService.getSuccessResponse(response);
 	}
 
+	/**
+	 * 알림을 삭제하는 메서드
+	 * @param notificationId 삭제할 알림 ID
+	 * @return 삭제 후 성공 응답 반환
+	 */
 	public BaseResponse<Void> deleteNotifcation(Long notificationId) {
 		notificationRepository.findById(notificationId)
 			.orElseThrow(() -> new CustomRuntimeException(NotificationException.NOTIFCATION_NOT_FOUND));
