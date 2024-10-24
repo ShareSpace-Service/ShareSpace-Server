@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.matching.controller;
 
+import static com.sharespace.sharespace_server.global.utils.RequestParser.*;
+
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,8 +35,8 @@ public class MatchingController {
 	private final MatchingService matchingService;
 
 	@GetMapping()
-	public BaseResponse<List<MatchingShowAllResponse>> showAll() {
-		Long userId = 2L;
+	public BaseResponse<List<MatchingShowAllResponse>> showAll(HttpServletRequest request) {
+		Long userId = extractUserId(request);
 		return matchingService.showAll(userId);
 	}
 
@@ -50,9 +52,10 @@ public class MatchingController {
 
 	// STORED -> COMPLETED
 	@PatchMapping("/completeStorage")
-	public BaseResponse<Void> completeStorage(@Valid @RequestBody MatchingCompleteStorageRequest request) {
+	public BaseResponse<Void> completeStorage(@Valid @RequestBody MatchingCompleteStorageRequest request, HttpServletRequest servletRequest) {
 		Long matchingId = request.getMatchingId();
-		return matchingService.completeStorage(matchingId);
+		Long userId = extractUserId(servletRequest);
+		return matchingService.completeStorage(matchingId, userId);
 	}
 
 	@GetMapping("/requestDetail")
@@ -76,9 +79,9 @@ public class MatchingController {
 
 	// 보관 대기중일 때, Host와 Guest는 '요청 취소'를 할 수 있다.
 	@PostMapping("/cancelRequest")
-	public BaseResponse<Void> cancelRequest(@RequestParam("matchingId") Long matchingId/*, HttpServletRequest request*/) {
-		//Long userId = RequestParser.extractUserId(request);
-		return matchingService.cancelRequest(matchingId);
+	public BaseResponse<Void> cancelRequest(@RequestParam("matchingId") Long matchingId, HttpServletRequest request) {
+		Long userId = extractUserId(request);
+		return matchingService.cancelRequest(matchingId, userId);
 	}
 
 	@PostMapping("/uploadImage/host")
