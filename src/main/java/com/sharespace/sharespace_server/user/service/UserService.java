@@ -25,6 +25,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -312,4 +313,11 @@ public class UserService {
         response.addCookie(cookie);
     }
 
+    public BaseResponse<Void> checkLogin() {
+        if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+            .anyMatch(grantedAuthority -> "ROLE_ANONYMOUS".equals(grantedAuthority.getAuthority()))) {
+            throw new CustomRuntimeException(UserException.NOT_LOGGED_IN_USER);
+        }
+        return baseResponseService.getSuccessResponse();
+    }
 }

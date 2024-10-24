@@ -3,6 +3,7 @@ package com.sharespace.sharespace_server.product.entity;
 import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.MatchingException;
+import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.user.entity.User;
 import jakarta.persistence.*;
@@ -68,4 +69,13 @@ public class Product {
             throw new CustomRuntimeException(MatchingException.INVALID_PRODUCT_PERIOD);
         }
     }
+
+    // 사용자는 보관 요청을 보낼 때 product가 자신의 것이 맞는지 확인하는 검증을 해야함
+
+    public void validateProductOwnershipForUser(User user) {
+        if (!this.getUser().equals(user)) {
+            throw new CustomRuntimeException(ProductException.PRODUCT_NOT_MATCHED_TO_USER);
+        }
+    }
+
 }

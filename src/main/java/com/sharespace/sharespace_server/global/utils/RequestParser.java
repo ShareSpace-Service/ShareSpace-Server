@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.global.utils;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -30,5 +32,10 @@ public class RequestParser {
 
         String userId = String.valueOf(claims.get("userId"));
         return Long.valueOf(userId);
+    }
+    public static String getCurrentUserRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String roles = authentication.getAuthorities().toString();
+        return roles.replace("[", "").replace("]","");
     }
 }
