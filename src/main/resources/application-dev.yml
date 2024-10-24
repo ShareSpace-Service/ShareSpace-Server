@@ -8,7 +8,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true             # SQL 쿼리 로그 출력
+    show-sql: false             # SQL 쿼리 로그 출력
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect # MySQLDialect 사용
