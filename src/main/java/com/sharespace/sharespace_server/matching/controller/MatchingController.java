@@ -2,6 +2,8 @@ package com.sharespace.sharespace_server.matching.controller;
 
 import static com.sharespace.sharespace_server.global.utils.RequestParser.*;
 
+import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
+import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,8 +43,14 @@ public class MatchingController {
 	}
 
 	@PostMapping("/keep")
-	public BaseResponse<Void> keep(@Valid @RequestBody MatchingKeepRequest request) {
-		return matchingService.keep(request);
+	public BaseResponse<Void> keep(@Valid @RequestBody MatchingKeepRequest matchingRequest, HttpServletRequest servletRequest) {
+		String currentUserRole = getCurrentUserRole();
+		// TODO : Spring AOP 사용하여 권한 관련 로직 중앙화하기
+		if (!currentUserRole.equals("ROLE_GUEST")) {
+			throw new CustomRuntimeException(UserException.NOT_AUTHORIZED);
+		}
+		Long userId = extractUserId(servletRequest);
+		return matchingService.keep(matchingRequest, userId);
 	}
 
 	@GetMapping("/keepDetail")
