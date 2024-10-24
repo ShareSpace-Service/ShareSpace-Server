@@ -1,6 +1,7 @@
 package com.sharespace.sharespace_server.matching.service;
 
 
+import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.matching.dto.MatchingAssembler;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
@@ -57,25 +58,26 @@ public class MatchingService {
 	private final MatchingAssembler matchingAssembler;
 
 	/**
-	 * 모든 매칭을 조회하여 응답 객체로 반환하는 메서드
+	 * 사용자의 역할에 따라 모든 매칭을 조회하여 응답 객체로 반환하는 메서드
 	 *
 	 * 1. 사용자 ID를 기반으로 사용자를 조회하고,
-	 * 2. 사용자의 모든 물품을 조회하여, 각 물품에 대해 매칭 응답을 생성하여 리스트로 반환
+	 * 2. 사용자의 역할(Role)이 게스트(ROLE_GUEST)인 경우, 해당 사용자의 물품과 관련된 매칭을 조회
+	 * 3. 호스트(ROLE_HOST)인 경우, 해당 사용자의 장소와 관련된 매칭을 조회
+	 * 4. 조회된 매칭을 매칭 응답 객체로 변환하여 리스트로 반환
 	 *
-	 * @param userId - 조회할 사용자의 ID
-	 * @return BaseResponse<List<MatchingShowAllResponse>> - 모든 매칭 정보 리스트를 담은 응답 객체
+	 * @param userId - 매칭을 조회할 사용자의 ID
+	 * @return BaseResponse<List<MatchingShowAllResponse>> - 사용자의 매칭 정보를 담은 응답 객체
 	 */
-	
-	
+
 	public BaseResponse<List<MatchingShowAllResponse>> showAll(Long userId) {
 		User user = findUser(userId);
-		List<Matching> matchings = matchingRepository.findMatchingWithProductByUserId(userId);
+		List<Matching> matchings = getMatchingsByRole(user);
 		List<MatchingShowAllResponse> responses = matchings.stream()
 			.map(matchingAssembler::toMatchingShowAllResponse)
 			.collect(Collectors.toList());
 		return baseResponseService.getSuccessResponse(responses);
 	}
-	/**s
+	/**
 	 * MatchingKeepRequest 객체를 기반으로 Place와 Product를 매칭하여 Matching 엔티티를 생성하는 메서드
 	 *
 	 * 1. Place와 Product의 유효성을 검사하고,
@@ -89,6 +91,11 @@ public class MatchingService {
 	 */
 	@Transactional
 	public BaseResponse<Void> keep(MatchingKeepRequest request) {
+		/*
+		 * TODO : 사용자 유효성 검증
+		 * 1. 사용자가 Guest가 아니면 보관 요청을 보낼 수 없다.
+		 * 2. 사용자는 보관 요청을 보낼 때 product가 자신의 것이 맞는지 확인하는 검증을 해야함
+		 */
 		// Place와 Product를 찾고, 유효성 검증
 		Place place = placeRepository.findById(request.getPlaceId())
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
@@ -140,25 +147,25 @@ public class MatchingService {
 
 	/**
 	 * 주어진 matchingId에 해당하는 매칭 정보를 통해 물품 보관 완료 처리를 하는 메서드
-	 *
+	 * <p>
 	 * 1. 매칭된 Guest 또는 Host의 완료 여부를 확인한 후, 매칭 테이블에서 해당 유저(호스트/게스트)의 완료 상태를 업데이트
 	 * 2. Guest와 Host 모두가 완료한 경우, 매칭 상태를 'COMPLETED'로 변경
 	 * 3. 매칭 ID가 유효하지 않거나, 유저 권한이 맞지 않는 경우에는 예외를 던짐
 	 *
 	 * @param matchingId - 완료 처리할 매칭 엔티티의 ID
+	 * @param userId
 	 * @return BaseResponse<Void> - 성공 시 응답 객체 (데이터 없음)
 	 * @throws CustomRuntimeException - 유효하지 않은 매칭 ID이거나, 유저 권한 또는 상태가 일치하지 않는 경우 예외 발생
 	 */
 	@Transactional
-	public BaseResponse<Void> completeStorage(Long matchingId) {
-		User user = findUser(1L); // TODO : 토큰에서 유저 가져오는 것으로 변경
+	public BaseResponse<Void> completeStorage(Long matchingId, Long userId) {
+		User user = findUser(userId);
 
 		Matching matching = findMatching(matchingId);
 
 		matching.completeStorage(user);
 
 		matchingRepository.save(matching);
-		// TODO : 알림 전송 로직 및 한 쪽만 수락했을 때 반대쪽에게 알림 전송
 		// 알림 전송 로직
 
 		// Host만 수락했을 때
@@ -258,19 +265,19 @@ public class MatchingService {
 
 	/**
 	 * 매칭 요청을 취소하는 메서드
-	 *
+	 * <p>
 	 * 1. 사용자 ID를 통해 사용자를 조회하고,
 	 * 2. 매칭 상태가 PENDING인 경우에만 요청을 취소하며,
 	 * 3. GUEST가 요청을 취소하는 경우 미배정 상태로 변경하고, HOST가 요청을 취소하는 경우 반려 상태로 변경
 	 *
 	 * @param matchingId - 취소할 매칭 엔티티의 ID
+	 * @param userId
 	 * @return BaseResponse<Void> - 성공 시 응답 객체
 	 * @throws CustomRuntimeException - 매칭 상태가 PENDING이 아니거나 유효하지 않은 경우 발생
 	 */
 	@Transactional
-	public BaseResponse<Void> cancelRequest(Long matchingId) {
-		User user = findUser(1L); // TODO : 토큰에서 유저 가져오는 것으로 변경
-		Long userId = user.getId(); // TODO : 매직 넘버를 사용했으므로 나중엔 Parameter에서 받아와야 함
+	public BaseResponse<Void> cancelRequest(Long matchingId, Long userId) {
+		User user = findUser(userId);
 		Matching matching = findMatching(matchingId);
 
 		// Matching 객체에게 취소 처리 위임
@@ -284,7 +291,7 @@ public class MatchingService {
 			/* 1-1. 요청 취소의 주체가 Place의 owner, 즉, Host일 경우
 			 * matching.getProduct().getUser.getId() => Guest의 userId로 알림 전송
 			 */
-		if (userId == matching.getPlace().getUser().getId()) {
+		if (userId.equals(matching.getPlace().getUser().getId())) {
 			notificationService.sendNotification(matching.getProduct().getUser().getId(), CANCELED_MATCHING.getMessage());
 		} else {
 			/* 1-2. 요청 취소의 주체가 Product의 owner, 즉, Host일 경우
@@ -335,5 +342,24 @@ public class MatchingService {
 	public User findUser(Long userId) {
 		return userRepository.findById(userId)
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+	}
+
+	/**
+	 * 사용자 역할에 따라 매칭을 조회하는 메서드
+	 *
+	 * 1. 사용자가 게스트(ROLE_GUEST)일 경우, 해당 사용자의 물품과 관련된 매칭을 조회
+	 * 2. 사용자가 호스트(ROLE_HOST)일 경우, 해당 사용자의 장소와 관련된 매칭을 조회
+	 *
+	 * @param user - 매칭을 조회할 사용자 객체
+	 * @return List<Matching> - 조회된 매칭 리스트
+	 */
+	private List<Matching> getMatchingsByRole(User user) {
+		if (user.getAuthorities().equals(Role.ROLE_GUEST)) {
+			// Guest면 Product + Matching 조회
+			return matchingRepository.findMatchingWithProductByUserId(user.getId());
+		} else {
+			// Host면 Place + Matching 조회
+			return matchingRepository.findMatchingWithPlaceByUserId(user.getId());
+		}
 	}
 }
