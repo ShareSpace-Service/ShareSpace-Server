@@ -79,32 +79,42 @@ public class MatchingService {
 	}
 	/**
 	 * MatchingKeepRequest 객체를 기반으로 Place와 Product를 매칭하여 Matching 엔티티를 생성하는 메서드
-	 *
+	 * <p>
 	 * 1. Place와 Product의 유효성을 검사하고,
 	 * 2. Product의 카테고리 값이 Place의 카테고리 값보다 클 경우 예외를 던지며,
 	 * 3. 이미 동일한 Product와 Place로 매칭이 존재하는 경우 예외를 던짐
 	 * 4. Matching을 생성하고, Product의 isPlaced 상태를 true로 업데이트
 	 *
 	 * @param request - 매칭을 위한 Place와 Product의 ID를 포함하는 요청 객체
+	 * @param userId
 	 * @return BaseResponse<Void> - 성공 시 응답 객체 (데이터 없음)
 	 * @throws CustomRuntimeException - Place나 Product가 존재하지 않거나, 카테고리 불일치 또는 매칭 중복 시 발생
 	 */
 	@Transactional
-	public BaseResponse<Void> keep(MatchingKeepRequest request) {
+	public BaseResponse<Void> keep(MatchingKeepRequest request, Long userId) {
 		/*
-		 * TODO : 사용자 유효성 검증
-		 * 1. 사용자가 Guest가 아니면 보관 요청을 보낼 수 없다.
+		 * 사용자 유효성 검증
+		 * 1. 사용자가 Guest가 아니면 보관 요청을 보낼 수 없다. (컨트롤러에서 처리 완료)
 		 * 2. 사용자는 보관 요청을 보낼 때 product가 자신의 것이 맞는지 확인하는 검증을 해야함
 		 */
+
+		User user = findUser(userId);
 		// Place와 Product를 찾고, 유효성 검증
 		Place place = placeRepository.findById(request.getPlaceId())
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 		Product product = productRepository.findById(request.getProductId())
 			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
 
+		// TODO : 무한 매칭 요청 가능 문제 해결
+		// productId와 placeId가 이미 존재하는 매칭일 경우 예외 던져주면 될 듯
+		if (matchingRepository.findMatchingByProductIdAndPlaceId(product.getId(), place.getId()).isPresent()) {
+			throw new CustomRuntimeException(MatchingException.ALREADY_REQUESTED_PRODUCT_TO_SAME_PLACE);
+		}
+
 		// Product와 Place에서 Category와 Period에 대해 유효성 검증 수행
 		product.validateCategoryForPlace(place);
 		product.validatePeriodForPlace(place);
+		product.validateProductOwnershipForUser(user);
 
 		// 매칭 생성 및 처리 로직은 Matching 객체가 처리
 		Matching matching = Matching.create(product, place);
@@ -354,7 +364,7 @@ public class MatchingService {
 	 * @return List<Matching> - 조회된 매칭 리스트
 	 */
 	private List<Matching> getMatchingsByRole(User user) {
-		if (user.getAuthorities().equals(Role.ROLE_GUEST)) {
+		if (user.getRole().equals(Role.ROLE_GUEST)) {
 			// Guest면 Product + Matching 조회
 			return matchingRepository.findMatchingWithProductByUserId(user.getId());
 		} else {
