@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
 
-    private final String[] whiteListUris = new String[] {"/login", "/user/login", "user/register"};
+    private final String[] whiteListUris = new String[] {"/login", "/user/login", "/user/register", "/user/checkLogin"};
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,

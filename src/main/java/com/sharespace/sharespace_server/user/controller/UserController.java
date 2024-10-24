@@ -56,4 +56,9 @@ public class UserController {
         return userService.logout(accessToken, refreshToken, response, userId);
     }
 
+    @GetMapping("/checkLogin")
+    public BaseResponse<Void> checkLogin() {
+        return userService.checkLogin();
+    }
+
 }
