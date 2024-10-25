@@ -77,6 +77,15 @@ public class MatchingService {
 			.collect(Collectors.toList());
 		return baseResponseService.getSuccessResponse(responses);
 	}
+
+	public BaseResponse<List<MatchingShowAllResponse>> showFilteredList(Status status, Long userId) {
+		User user = findUser(userId);
+		List<Matching> matchings = getFilteredMatchingsByRole(user, status);
+		List<MatchingShowAllResponse> responses = matchings.stream()
+			.map(matchingAssembler::toMatchingShowAllResponse)
+			.collect(Collectors.toList());
+		return baseResponseService.getSuccessResponse(responses);
+	}
 	/**
 	 * MatchingKeepRequest 객체를 기반으로 Place와 Product를 매칭하여 Matching 엔티티를 생성하는 메서드
 	 * <p>
@@ -372,4 +381,15 @@ public class MatchingService {
 			return matchingRepository.findMatchingWithPlaceByUserId(user.getId());
 		}
 	}
+
+	private List<Matching> getFilteredMatchingsByRole(User user, Status status) {
+		if (user.getRole().equals(Role.ROLE_GUEST)) {
+			// Guest면 Product + Matching 조회
+			return matchingRepository.findMatchingWithProductByUserIdAndStatus(user.getId(), status);
+		} else {
+			// Host면 Place + Matching 조회
+			return matchingRepository.findMatchingWithPlaceByUserIdAndStatus(user.getId(), status);
+		}
+	}
+
 }
