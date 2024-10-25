@@ -15,6 +15,10 @@ import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationResponse;
 import com.sharespace.sharespace_server.user.entity.User;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -92,28 +96,31 @@ public class NotificationService {
 	 * @param userId 알림을 조회할 유저 ID
 	 * @return 알림 리스트와 함께 성공 응답을 반환
 	 */
-	public BaseResponse<List<NotificationAllResponse>> getNotifications(Long userId) {
-		User user = userRepository.findById(userId).
-		orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
-		List<Notification> notificationList = notificationRepository.findAllByUser(user);
+	public BaseResponse<List<NotificationAllResponse>> getNotifications(Long userId, int page, int size) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
+		PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")); // 최신 알림이 위로 오도록 정렬
+		Page<Notification> notificationPage = notificationRepository.findAllByUser(user, pageRequest);
 
 		List<NotificationAllResponse> response = new ArrayList<>();
 		LocalDateTime now = LocalDateTime.now();
-		for (Notification notification : notificationList) {
+		for (Notification notification : notificationPage.getContent()) {
 			Duration duration = Duration.between(notification.getCreatedAt(), now);
 			int timeElapsed = (int) duration.toMinutes();
 
 			NotificationAllResponse notificationResponse = NotificationAllResponse.builder()
-					.notificationId(notification.getId())
-					.isRead(notification.isRead())
-					.timeElapsed(timeElapsed)
-					.message(notification.getMessage())
-					.build();
+				.notificationId(notification.getId())
+				.isRead(notification.isRead())
+				.timeElapsed(timeElapsed)
+				.message(notification.getMessage())
+				.build();
 
 			response.add(notificationResponse);
 		}
 		return baseResponseService.getSuccessResponse(response);
 	}
+
 
 	/**
 	 * 알림을 삭제하는 메서드
