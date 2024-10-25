@@ -27,6 +27,13 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build
 
+      - name: Create application-release.yml from secret
+        run: |
+          cd ./src/main/resources
+          touch ./application-release.yml
+          echo "${{ secrets.APPLICATION }}" >> ./application-release.yml
+        shell: bash
+
       - name: docker image build
         run: |
           docker build -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/sharespace .
@@ -40,9 +47,3 @@ jobs:
       - name: docker Hub push
         run: docker push ${{ secrets.DOCKER_USERNAME }}/sharespace:latest
 
-      - name: Create application-release.yml from secret
-        run: |
-          cd ./src/main/resources
-          touch ./application-release.yml
-          echo "${{ secrets.APPLICATION }}" >> ./application-release.yml
-        shell: bash
