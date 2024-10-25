@@ -47,8 +47,27 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String email = obtainUsername(request);
         String password = obtainPassword(request);
 
-//        userService.loginAttemptaionCheck(email);
+        // 해당 이메일 기반 유저 존재 여부 확인
+        if(!userService.checkUserPresents(email)) {
+            try {
+                sendErrorResponse(response, HttpStatus.BAD_REQUEST, "존재하지 않는 계정입니다.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        }
 
+        // 이메일 인증여부 확인
+        if(!userService.loginAttemptaionCheck(email)) {
+            try {
+                sendErrorResponse(response, HttpStatus.BAD_REQUEST, "이메일 인증이 되어 있지 않은 사용자입니다.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        }
+
+        // 계정 잠금여부 확인
         if (!userService.checkAccountLocked(email)) {
             // 해당 멤버의 계정이 잠겨있는지 확인하고, 계정이 잠겨있지 않으면 인증 토큰을 만든다.
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password,
@@ -57,13 +76,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         } else {
             // 계정이 잠겨있는 상태면, 423 에러(HttpStatus.LOCKED)를 반환한다.
             try {
-                sendUserLoginResponse(response, HttpStatus.LOCKED);
+                sendErrorResponse(response, HttpStatus.LOCKED, "계정이 잠겨있습니다.");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            return null;
         }
-        throw new AuthenticationException("계정이 잠겨있습니다.") {
-        };
 
     }
 
@@ -110,6 +128,18 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setStatus(status.value());
         PrintWriter out = response.getWriter();
         out.print(new ObjectMapper().writeValueAsString(messageMap));
+        out.flush();
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(status.value());
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("STATUS", status.toString());
+        errorResponse.put("MESSAGE", message);
+
+        PrintWriter out = response.getWriter();
+        out.print(new ObjectMapper().writeValueAsString(errorResponse));
         out.flush();
     }
 
