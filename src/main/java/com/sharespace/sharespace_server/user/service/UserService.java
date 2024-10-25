@@ -1,6 +1,5 @@
 package com.sharespace.sharespace_server.user.service;
 
-import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.JwtException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
@@ -20,8 +19,6 @@ import com.sharespace.sharespace_server.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.CookieValue;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
