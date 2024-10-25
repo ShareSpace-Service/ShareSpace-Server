@@ -11,6 +11,7 @@ import com.sharespace.sharespace_server.jwt.entity.Token;
 import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
+import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
@@ -323,5 +324,12 @@ public class UserService {
             throw new CustomRuntimeException(UserException.NOT_LOGGED_IN_USER);
         }
         return baseResponseService.getSuccessResponse();
+    }
+
+    public BaseResponse<UserGetIdResponse> getUserId(Long userId) {
+        return baseResponseService.getSuccessResponse(
+            UserGetIdResponse.builder()
+                .userId(userId)
+                .build());
     }
 }
