@@ -1,6 +1,5 @@
 package com.sharespace.sharespace_server.user.service;
 
-import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.JwtException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
@@ -12,6 +11,7 @@ import com.sharespace.sharespace_server.jwt.entity.Token;
 import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
+import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
@@ -20,8 +20,6 @@ import com.sharespace.sharespace_server.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.CookieValue;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -327,5 +324,12 @@ public class UserService {
             throw new CustomRuntimeException(UserException.NOT_LOGGED_IN_USER);
         }
         return baseResponseService.getSuccessResponse();
+    }
+
+    public BaseResponse<UserGetIdResponse> getUserId(Long userId) {
+        return baseResponseService.getSuccessResponse(
+            UserGetIdResponse.builder()
+                .userId(userId)
+                .build());
     }
 }
