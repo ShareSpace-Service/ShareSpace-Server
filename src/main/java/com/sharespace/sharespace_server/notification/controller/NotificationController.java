@@ -30,11 +30,13 @@ public class NotificationController {
 	}
 
 	@GetMapping()
-	public BaseResponse<List<NotificationAllResponse>> getNotifications(HttpServletRequest request) {
+	public BaseResponse<List<NotificationAllResponse>> getNotifications(
+		HttpServletRequest request,
+		@RequestParam int page,
+		@RequestParam int size) {
 		Long userId = extractUserId(request);
-		return notificationService.getNotifications(userId);
+		return notificationService.getNotifications(userId, page, size);
 	}
-
 	@DeleteMapping()
 	BaseResponse<Void> deleteNotifcation(@RequestParam Long notificationId) {
 		return notificationService.deleteNotifcation(notificationId);
