@@ -256,8 +256,7 @@ public class UserService {
 
     // 로그인할 때 Request가 Email로 오므로 email로 member 찾아야 함
     public boolean checkAccountLocked(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
         // member의 lockTime이 null이 아니면 계정이 잠금상태인 것임
         if (user.getLockTime() != null) {
             LocalDateTime unlockTime = user.getLockTime().plusMinutes(5);
@@ -273,15 +272,24 @@ public class UserService {
         return false;
     }
 
-//    // 로그인 시도 검증 로직
-//    public void loginAttemptaionCheck(String email) {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
-//
-//        if (!user.getEmailValidated()) {
-//            throw new CustomRuntimeException(UserException.EMAIL_NOT_VALIDATED);
-//        }
-//    }
+    // 로그인 시도시 이메일 인증여부 검증 메소드
+    public boolean loginAttemptaionCheck(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
+        if (!user.getEmailValidated()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public boolean checkUserPresents(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     // 로그인 시도 실패 후 로직
     public void loginAttemptationFailed(String email) {
