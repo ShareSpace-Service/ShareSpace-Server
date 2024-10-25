@@ -2,6 +2,7 @@ package com.sharespace.sharespace_server.matching.controller;
 
 import static com.sharespace.sharespace_server.global.utils.RequestParser.*;
 
+import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
@@ -36,10 +37,17 @@ import java.util.List;
 public class MatchingController {
 	private final MatchingService matchingService;
 
-	@GetMapping()
-	public BaseResponse<List<MatchingShowAllResponse>> showAll(HttpServletRequest request) {
+	@GetMapping
+	public BaseResponse<List<MatchingShowAllResponse>> showList(
+		@RequestParam(value = "status", required = false) Status status,
+		HttpServletRequest request) {
 		Long userId = extractUserId(request);
-		return matchingService.showAll(userId);
+
+		if (status == null) {
+			return matchingService.showAll(userId);
+		} else {
+			return matchingService.showFilteredList(status, userId);
+		}
 	}
 
 	@PostMapping("/keep")
@@ -82,7 +90,6 @@ public class MatchingController {
 	@PatchMapping("/confirmStorage/guest")
 	public BaseResponse<Void> guestConfirmStorage(@Valid @RequestBody MatchingGuestConfirmStorageRequest request) {
 		return matchingService.guestConfirmStorage(request);
-
 	}
 
 	// 보관 대기중일 때, Host와 Guest는 '요청 취소'를 할 수 있다.
