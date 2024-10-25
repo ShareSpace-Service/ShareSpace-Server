@@ -55,7 +55,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.KEY }}
           script: |
-            sudo docker-compose down -v
+            sudo docker-compose -f ./docker-compose.yml down -v
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/sharespace:latest
-            sudo docker-compose up -d
+            sudo docker-compose -f ./docker-compose.ymls up -d
             sudo docker image prune -a -f
