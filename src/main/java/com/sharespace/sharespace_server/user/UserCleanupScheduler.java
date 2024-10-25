@@ -12,7 +12,7 @@ public class UserCleanupScheduler {
     private final UserRepository userRepository;
 
     // 매일 자정 (00:00)에 실행되도록 설정
-    @Scheduled(cron = "0 21 17 * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void deleteUnverifiedUsers() {
         userRepository.deleteByEmailValidatedFalse();
