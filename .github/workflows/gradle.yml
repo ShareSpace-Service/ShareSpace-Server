@@ -20,19 +20,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      ## gradle build
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew clean build
-
       - name: Create application-release.yml from secret
         run: |
           cd ./src/main/resources
           touch ./application-release.yml
           echo "${{ secrets.APPLICATION }}" >> ./application-release.yml
         shell: bash
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
 
       - name: docker image build
         run: |
@@ -46,4 +45,3 @@ jobs:
 
       - name: docker Hub push
         run: docker push ${{ secrets.DOCKER_USERNAME }}/sharespace:latest
-
