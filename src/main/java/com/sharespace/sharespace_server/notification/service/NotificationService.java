@@ -58,7 +58,10 @@ public class NotificationService {
 		}
 		// 연결이 종료되면 emitter를 제거
 		emitter.onCompletion(() -> sseEmitters.remove(userId));
-		emitter.onTimeout(() -> sseEmitters.remove(userId));
+		emitter.onTimeout(() -> {
+			removeSseEmitter(userId);
+			}
+		);
 
 		return emitter;
 	}
@@ -133,5 +136,12 @@ public class NotificationService {
 
 		notificationRepository.deleteById(notificationId);
 		return baseResponseService.getSuccessResponse();
+	}
+
+	public void removeSseEmitter(Long userId) {
+		SseEmitter emitter = sseEmitters.remove(userId);
+		if (emitter != null) {
+			emitter.complete();
+		}
 	}
 }
