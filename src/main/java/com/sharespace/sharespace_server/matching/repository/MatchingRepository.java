@@ -13,8 +13,8 @@ import com.sharespace.sharespace_server.matching.entity.Matching;
 
 @Repository
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
-	Optional<Matching> findAllByPlaceUserIdAndStatusIn(Long id, List<Status> pending);
-	Optional<Matching> findAllByProductUserIdAndStatusIn(Long id, List<Status> pending);
+	List<Matching> findAllByPlaceUserIdAndStatusIn(Long id, List<Status> pending);
+	List<Matching> findAllByProductUserIdAndStatusIn(Long id, List<Status> pending);
 	List<Matching> findAllByProductIdInAndPlaceId(List<Long> productIds, Long placeId);
 	Optional<Matching> findByProductIdAndPlaceId(Long productId, Long placeId);
 	List<Matching> findAllByStatus(Status status);
