@@ -10,6 +10,7 @@ import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.jwt.entity.Token;
 import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
+import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,6 +50,7 @@ public class UserService {
     private final S3ImageUpload s3ImageUpload;
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenJpaRepository tokenJpaRepository;
+    private final NotificationService notificationService;
 
 
     @Transactional
@@ -164,6 +167,12 @@ public class UserService {
         // 2. 쿠키 만료 처리
         expireCookie(response, "accessToken");
         expireCookie(response, "refreshToken");
+
+
+        // 로그아웃시 연결 해제
+        notificationService.removeSseEmitter(userId);
+
+
 
         tokenJpaRepository.delete(token);
 
