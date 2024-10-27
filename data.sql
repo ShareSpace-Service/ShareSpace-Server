@@ -76,12 +76,12 @@ CREATE TABLE notification (
 CREATE TABLE matching (
     id BIGINT NOT NULL AUTO_INCREMENT,
     product_id BIGINT NOT NULL,
-    place_id BIGINT NOT NULL,
+    place_id BIGINT NULL,
     image TEXT NULL COMMENT '요청을 수락했을 경우 매칭 테이블에 저장됨.',
     status ENUM('UNASSIGNED', 'REQUESTED', 'REJECTED', 'PENDING', 'STORED', 'COMPLETED') NOT NULL,
     host_completed BOOLEAN NOT NULL DEFAULT 0,
     guest_completed BOOLEAN NOT NULL DEFAULT 0,
-    distance INT NOT NULL COMMENT 'm 단위로 저장',
+    distance INT NULL COMMENT 'm 단위로 저장',
     start_date DATETIME NULL,
     expiry_date DATETIME NULL,
     PRIMARY KEY (id),
@@ -99,5 +99,5 @@ CREATE TABLE contact (
 
 INSERT INTO user (nick_name, email, image, role, password, location, latitude, longitude, email_validated)
 VALUES
-    ('호스트민우갓', 'hostminwoo@example.com', 'temporary image url', 'ROLE_HOST', '1234', '서울', 200, 100, 1),
-    ('게스트민우갓', 'guestminwoo@example.com', 'temporary image url', 'ROLE_GUEST', '1234', '경기', 100, 200, 1);
+    ('호스트민우갓', 'hostminwoo@example.com', 'temporary image url', 'ROLE_HOST', '$2b$12$qZMgj4TG2KqU2ulwGnMD8.0eYstepNGJRva/GEheQHOYNbdS5hIhi', '서울', 200, 100, 1),
+    ('게스트민우갓', 'guestminwoo@example.com', 'temporary image url', 'ROLE_GUEST', '$2b$12$qZMgj4TG2KqU2ulwGnMD8.0eYstepNGJRva/GEheQHOYNbdS5hIhi', '경기', 100, 200, 1);
