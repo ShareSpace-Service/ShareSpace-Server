@@ -107,7 +107,7 @@ public class MatchingController {
 		return matchingService.uploadImage(request);
 	}
 
-	@PatchMapping("/matching/{matchingId}")
+	@PatchMapping("/{matchingId}")
 	public BaseResponse<Void> updateMatching(@PathVariable Long matchingId,
 		@RequestBody MatchingUpdateRequest matchingUpdateRequest,
 		HttpServletRequest request
