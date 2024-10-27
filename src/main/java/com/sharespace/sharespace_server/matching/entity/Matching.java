@@ -23,6 +23,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,6 +33,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "matching")
 public class Matching {
 	@Id
@@ -42,7 +46,7 @@ public class Matching {
 	private Product product;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "place_id", nullable = false)
+	@JoinColumn(name = "place_id")
 	private Place place;
 
 
@@ -62,23 +66,37 @@ public class Matching {
 
 	private LocalDateTime expiryDate;
 
-	public static Matching create(Product product, Place place) {
-		Matching matching = new Matching();
-		matching.setProduct(product);
-		matching.setPlace(place);
-		matching.setStatus(Status.REQUESTED);
-		matching.setStartDate(LocalDateTime.now());
-		matching.setExpiryDate(LocalDateTime.now().plusDays(product.getPeriod()));
-
+	public static Matching createNotSelectedPlace(Product product) {
+		return Matching.builder()
+			.place(null)
+			.distance(null)
+			.product(product)
+			.status(UNASSIGNED)
+			.startDate(LocalDateTime.now())
+			.expiryDate(null)
+			.build();
+	}
+	public static Matching createSelectedPlace(Product product, Place place) {
 		Integer distance = calculateDistance(product.getUser(), place.getUser());
-		matching.setDistance(distance);
-
+		Matching matching = Matching.builder()
+			.product(product)
+			.place(place)
+			.status(REQUESTED)
+			.distance(distance)
+			.startDate(LocalDateTime.now())
+			.expiryDate(LocalDateTime.now().plusDays(product.getPeriod()))
+			.build();
 		product.setIsPlaced(true);
-
 		return matching;
 	}
+	public void updatePlace(Place place) {
+		this.place = place;
+		this.distance = calculateDistance(this.product.getUser(), place.getUser());
+		this.status = REQUESTED;
+		this.expiryDate = LocalDateTime.now().plusDays(this.product.getPeriod());
+	}
 
-	private static Integer calculateDistance(User guest, User host) {
+	public static Integer calculateDistance(User guest, User host) {
 		return LocationTransform.calculateDistance(guest.getLatitude(), guest.getLongitude(), host.getLatitude(), host.getLongitude());
 	}
 

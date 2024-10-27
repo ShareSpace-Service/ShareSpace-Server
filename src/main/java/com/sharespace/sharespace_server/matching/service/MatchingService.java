@@ -20,6 +20,7 @@ import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
+import com.sharespace.sharespace_server.matching.dto.request.MatchingUpdateRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUploadImageRequest;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
@@ -114,20 +115,20 @@ public class MatchingService {
 		Product product = productRepository.findById(request.getProductId())
 			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
 
-		// TODO : 무한 매칭 요청 가능 문제 해결
-		// productId와 placeId가 이미 존재하는 매칭일 경우 예외 던져주면 될 듯
+		// productId와 placeId가 이미 존재하는 매칭일 경우 예외 던짐
 		if (matchingRepository.findMatchingByProductIdAndPlaceId(product.getId(), place.getId()).isPresent()) {
 			throw new CustomRuntimeException(MatchingException.ALREADY_REQUESTED_PRODUCT_TO_SAME_PLACE);
 		}
+
+		Matching matching = matchingRepository.findById(request.getMatchingId())
+			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
 
 		// Product와 Place에서 Category와 Period에 대해 유효성 검증 수행
 		product.validateCategoryForPlace(place);
 		product.validatePeriodForPlace(place);
 		product.validateProductOwnershipForUser(user);
 
-		// 매칭 생성 및 처리 로직은 Matching 객체가 처리
-		Matching matching = Matching.create(product, place);
-		matchingRepository.save(matching);
+		matching.updatePlace(place);
 
 		// 요청받은 Host에게 알림 전송
 		notificationService.sendNotification(place.getUser().getId(), REQUEST_KEEPING_TO_HOST.getMessage());
@@ -390,6 +391,19 @@ public class MatchingService {
 			// Host면 Place + Matching 조회
 			return matchingRepository.findMatchingWithPlaceByUserIdAndStatus(user.getId(), status);
 		}
+	}
+
+
+	@Transactional
+	public BaseResponse<Void> updateMatchingWithPlace(Long matchingId, MatchingUpdateRequest request, Long userId) {
+		Matching matching = matchingRepository.findById(matchingId)
+			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
+
+		Place place = placeRepository.findById(request.getPlaceId())
+			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
+
+		matching.updatePlace(place);
+		return baseResponseService.getSuccessResponse();
 	}
 
 }
