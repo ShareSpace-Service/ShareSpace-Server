@@ -54,7 +54,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.KEY }}
           source: "./docker-compose.yml"
-          target: "/home/ubuntu/sharespace"  # EC2 서버의 적절한 경로로 지정
+          target: "/home/ubuntu"  # EC2 서버의 적절한 경로로 지정
 
       ## docker compose up
       - name: executing remote ssh commands using password
@@ -64,7 +64,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.KEY }}
           script: |
-            cd /home/ubuntu/sharespace
+            cd /home/ubuntu
             sudo docker-compose down -v
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/sharespace:latest
             sudo docker-compose up -d
