@@ -21,24 +21,13 @@ public class MatchingAssembler {
 	public MatchingShowAllResponse toMatchingShowAllResponse(Matching matching) {
 		Product product = matching.getProduct();
 		List<String> imageUrls = List.of(matching.getProduct().getImageUrl().split(","));
-		if (!product.getIsPlaced()) {
-			return MatchingShowAllResponse.builder()
-				.matchingId(null)
-				.title(product.getTitle())
-				.category(product.getCategory())
-				.imageUrl(imageUrls)
-				.status(UNASSIGNED)
-				.distance(null)
-				.build();
-		} else {
-			return MatchingShowAllResponse.builder()
-				.matchingId(matching.getId())
-				.title(product.getTitle())
-				.category(product.getCategory())
-				.imageUrl(imageUrls)
-				.status(matching.getStatus())
-				.distance(matching.getDistance())
-				.build();
-		}
+		return MatchingShowAllResponse.builder()
+			.matchingId(matching.getId())
+			.title(product.getTitle())
+			.category(product.getCategory())
+			.imageUrl(imageUrls)
+			.status(matching.getStatus())
+			.distance(matching.getDistance())
+			.build();
 	}
 }
