@@ -105,9 +105,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException {
         userService.loginAttemptationFailed(obtainUsername(request));
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setCharacterEncoding("utf-8");
-        response.getWriter().write("인증 실패: " + failed.getMessage());
+        sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "비밀번호가 틀렸습니다.");
     }
 
     private void sendUserLoginResponse(HttpServletResponse response, HttpStatus status) throws IOException {
