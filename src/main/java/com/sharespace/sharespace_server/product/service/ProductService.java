@@ -7,6 +7,8 @@ import com.sharespace.sharespace_server.global.exception.error.ImageException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
+import com.sharespace.sharespace_server.matching.entity.Matching;
+import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
 import com.sharespace.sharespace_server.product.dto.ProductRegisterRequest;
 import com.sharespace.sharespace_server.product.dto.ProductRegisterResponse;
 import com.sharespace.sharespace_server.product.entity.Product;
@@ -24,6 +26,7 @@ public class ProductService {
     private final UserRepository userRepository;
     private final BaseResponseService baseResponseService;
     private final S3ImageUpload s3ImageUpload;
+    private final MatchingRepository matchingRepository;
 
     @Transactional
     public BaseResponse<ProductRegisterResponse> register(ProductRegisterRequest request, Long userId) {
@@ -41,13 +44,20 @@ public class ProductService {
                 .user(user)
                 .isPlaced(false)
                 .build();
-
         productRepository.save(product);
 
+        System.out.println(product.getId());
         List<String> imagesUrl = s3ImageUpload.uploadImages(request.getImageUrl(), "product/" + product.getId());
         product.setImageUrl(String.join(",", imagesUrl));
 
-        ProductRegisterResponse response = new ProductRegisterResponse(product.getId());
+        // 장소 등록하면 우선 Matching 테이블에 save
+        Matching matching = Matching.createNotSelectedPlace(product);
+        matchingRepository.save(matching);
+
+        ProductRegisterResponse response = ProductRegisterResponse.builder()
+            .productId(product.getId())
+            .matchingId(matching.getId())
+            .build();
 
         return baseResponseService.getSuccessResponse(response);
     }
