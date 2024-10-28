@@ -22,6 +22,7 @@ import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUpdateRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUploadImageRequest;
+import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllProductWithRoleResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
@@ -70,22 +71,30 @@ public class MatchingService {
 	 * @return BaseResponse<List<MatchingShowAllResponse>> - 사용자의 매칭 정보를 담은 응답 객체
 	 */
 
-	public BaseResponse<List<MatchingShowAllResponse>> showAll(Long userId) {
+	public BaseResponse<MatchingShowAllProductWithRoleResponse> showAll(Long userId) {
 		User user = findUser(userId);
 		List<Matching> matchings = getMatchingsByRole(user);
 		List<MatchingShowAllResponse> responses = matchings.stream()
 			.map(matchingAssembler::toMatchingShowAllResponse)
 			.collect(Collectors.toList());
-		return baseResponseService.getSuccessResponse(responses);
+		return baseResponseService.getSuccessResponse(
+			MatchingShowAllProductWithRoleResponse.builder()
+				.role(user.getRole().getValue())
+				.products(responses)
+				.build());
 	}
 
-	public BaseResponse<List<MatchingShowAllResponse>> showFilteredList(Status status, Long userId) {
+	public BaseResponse<MatchingShowAllProductWithRoleResponse> showFilteredList(Status status, Long userId) {
 		User user = findUser(userId);
 		List<Matching> matchings = getFilteredMatchingsByRole(user, status);
 		List<MatchingShowAllResponse> responses = matchings.stream()
 			.map(matchingAssembler::toMatchingShowAllResponse)
 			.collect(Collectors.toList());
-		return baseResponseService.getSuccessResponse(responses);
+		return baseResponseService.getSuccessResponse(
+			MatchingShowAllProductWithRoleResponse.builder()
+				.role(user.getRole().getValue())
+				.products(responses)
+				.build());
 	}
 	/**
 	 * MatchingKeepRequest 객체를 기반으로 Place와 Product를 매칭하여 Matching 엔티티를 생성하는 메서드
@@ -404,6 +413,30 @@ public class MatchingService {
 
 		matching.updatePlace(place);
 		return baseResponseService.getSuccessResponse();
+	}
+
+	public BaseResponse<List<MatchingShowAllResponse>> getProductsByPlace(Long placeId, Long userId) {
+		// 사용자 찾기
+		User user = findUser(userId);
+		// Place 찾기
+		Place place = placeRepository.findById(placeId)
+			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
+
+		/*
+		 * Place와 관련된 매칭 찾기
+		 * 1. Status가 UNASSIGNED, REJECTED이고, Product의 User의 id가 userId와 같은 Matching들을 가져온다.
+		 * 2. 선택한 Place의 Category와 Matching들의 Category들을 비교해서, Place의 Category보다 작은 Matching들을 가져온다.
+		 */
+		List<Matching> matchings = matchingRepository.findMatchingsWithProductByStatus(userId);
+
+		// Place의 카테고리 value보다 작거나 같은 Product들만 필터링
+		List<MatchingShowAllResponse> responses = matchings.stream()
+			.filter(matching -> matching.getProduct().getCategory().getValue() <= place.getCategory().getValue())
+			.map(matchingAssembler::toMatchingShowAllResponse)
+			.collect(Collectors.toList());
+
+		// 필터링된 매칭 리스트를 반환
+		return baseResponseService.getSuccessResponse(responses);
 	}
 
 }
