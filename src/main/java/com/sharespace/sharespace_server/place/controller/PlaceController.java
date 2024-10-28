@@ -32,8 +32,9 @@ public class PlaceController {
 
 	// task: main 화면에 보일 장소 리스트 조회
 	@GetMapping
-	public BaseResponse<List<PlacesResponse>> getPlaces() {
-		return placeService.getAllPlaces();
+	public BaseResponse<List<PlacesResponse>> getPlaces(HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return placeService.getAllPlaces(userId);
 	}
 
 	// task: product 카테고리에 맞는 장소 리스트 조회

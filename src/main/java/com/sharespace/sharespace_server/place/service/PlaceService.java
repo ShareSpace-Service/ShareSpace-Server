@@ -48,12 +48,13 @@ public class PlaceService {
 	 * <p>이 메서드는 데이터베이스에서 모든 장소 정보를 조회하고, 각 장소에 대해 게스트 사용자와 호스트 간의 거리를 계산하여
 	 * PlacesResponse 객체로 변환합니다.</p>
 	 *
+	 * @param userId
 	 * @return 모든 장소 정보를 담은 PlacesResponse 리스트를 성공 응답 형태로 반환합니다.
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<List<PlacesResponse>> getAllPlaces() {
-		User guest = findByUser(2L);
+	public BaseResponse<List<PlacesResponse>> getAllPlaces(Long userId) {
+		User guest = findByUser(userId);
 
 		List<PlacesResponse> placesResponseList = placeRepository.findAll().stream()
 			.map(place -> PlacesResponse.from(place, guest))
