@@ -5,6 +5,7 @@ import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
+import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +23,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public BaseResponse<Long> register(@Valid @RequestBody UserRegisterRequest request) {
+    public BaseResponse<UserRegisterResponse> register(@Valid @RequestBody UserRegisterRequest request) {
         return userService.register(request);
     }
 
