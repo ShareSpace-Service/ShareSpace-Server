@@ -46,7 +46,6 @@ public class ProductService {
                 .build();
         productRepository.save(product);
 
-        System.out.println(product.getId());
         List<String> imagesUrl = s3ImageUpload.uploadImages(request.getImageUrl(), "product/" + product.getId());
         product.setImageUrl(String.join(",", imagesUrl));
 

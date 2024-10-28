@@ -15,6 +15,7 @@ import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
+import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
@@ -54,7 +55,7 @@ public class UserService {
 
 
     @Transactional
-    public BaseResponse<Long> register(UserRegisterRequest request) {
+    public BaseResponse<UserRegisterResponse> register(UserRegisterRequest request) {
 
         // 이메일 중복 검사 메소드 호출
         emailDuplicate(request.getEmail());
@@ -87,7 +88,10 @@ public class UserService {
         // 이메일 전송 메소드 호출
         sendEmail(request.getEmail());
 
-        return baseResponseService.getSuccessResponse(user.getId());
+        return baseResponseService.getSuccessResponse(UserRegisterResponse.
+            builder()
+            .userId(user.getId())
+            .build());
     }
 
     // 이메일 인증여부 업데이트
@@ -96,6 +100,7 @@ public class UserService {
 
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
         // 이메일 인증 확인 메소드 호출
+        System.out.println(request.getValidationNumber());
         verifyCode(user.getEmail(), request.getValidationNumber());
 
         user.setEmailValidated(true);

@@ -12,9 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserEmailValidateRequest {
 
-    @NotNull
+    @NotNull(message = "userId는 null이 되어선 안 됩니다.")
     private Long userId;
 
-    @NotNull
     private Integer validationNumber;
 }
