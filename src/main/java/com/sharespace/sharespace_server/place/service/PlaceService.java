@@ -48,12 +48,13 @@ public class PlaceService {
 	 * <p>이 메서드는 데이터베이스에서 모든 장소 정보를 조회하고, 각 장소에 대해 게스트 사용자와 호스트 간의 거리를 계산하여
 	 * PlacesResponse 객체로 변환합니다.</p>
 	 *
+	 * @param userId 현재 로그인한 사용자 Id
 	 * @return 모든 장소 정보를 담은 PlacesResponse 리스트를 성공 응답 형태로 반환합니다.
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<List<PlacesResponse>> getAllPlaces() {
-		User guest = findByUser(2L);
+	public BaseResponse<List<PlacesResponse>> getAllPlaces(Long userId) {
+		User guest = findByUser(userId);
 
 		List<PlacesResponse> placesResponseList = placeRepository.findAll().stream()
 			.map(place -> PlacesResponse.from(place, guest))
@@ -70,7 +71,7 @@ public class PlaceService {
 	 * 포함한 PlacesResponse 리스트로 변환하여 반환합니다.</p>
 	 *
 	 * @param productId 상품 ID (Long 타입)
-	 * @param userId
+	 * @param userId 현재 로그인한 사용자 Id
 	 * @return 상품 카테고리에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트를 성공 응답 형태로 반환합니다.
 	 * @Author thereisname
 	 */
@@ -111,7 +112,7 @@ public class PlaceService {
 	 * 예외를 발생시킵니다. 또한, 이미지 업로드를 처리하며, 이미지가 없거나 유효하지 않을 경우에도 예외를 발생시킵니다.</p>
 	 *
 	 * @param placeRequest 장소 생성에 필요한 요청 데이터 (PlaceRequest 타입)
-	 * @param userId
+	 * @param userId 현재 로그인한 사용자 Id
 	 * @return 성공적으로 생성된 장소에 대한 성공 메시지를 반환합니다.
 	 * @throws CustomRuntimeException 동일한 사용자 ID로 이미 장소가 등록경우, 이미지가 유효하지 않거나 누락된 경우 발생합니다.
 	 * @Author thereisname
@@ -143,7 +144,7 @@ public class PlaceService {
 	 * 갱신하며, 장소의 기타 필드들도 요청된 값으로 변경됩니다.</p>
 	 *
 	 * @param placeRequest 장소 업데이트에 필요한 요청 데이터 (PlaceUpdateRequest 타입)
-	 * @param userId
+	 * @param userId 현재 로그인한 사용자 Id
 	 * @return 장소 수정에 대한 성공 메시지를 반환합니다.
 	 * @throws CustomRuntimeException 해당 사용자 ID로 등록된 장소가 존재하지 않는 경우 PLACE_NOT_FOUND 예외가 발생합니다.
 	 * @Author thereisname
