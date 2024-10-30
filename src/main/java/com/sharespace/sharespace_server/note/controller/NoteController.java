@@ -33,7 +33,7 @@ public class NoteController {
 	@GetMapping
 	public BaseResponse<List<NoteResponse>> getNote(HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
-		return noteService.getNote(userId);
+		return noteService.getAllNotes(userId);
 	}
 
 	@PostMapping

@@ -46,7 +46,7 @@ public class NoteService {
 	private final NotificationService notificationService;
 
 	@Transactional
-	public BaseResponse<List<NoteResponse>> getNote(Long userId) {
+	public BaseResponse<List<NoteResponse>> getAllNotes(Long userId) {
 		User user = findUserById(userId);
 
 		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(user.getId()).stream()
@@ -90,16 +90,11 @@ public class NoteService {
 	@Transactional
 	public BaseResponse<List<NoteSenderListResponse>> getSenderList(Long userId) {
 		User user = findUserById(userId);
-		List<Long> userIds = getUserIdsByRole(user);
+		List<NoteSenderListResponse> users = getUsersByRole(user);
 
-		if (userIds.isEmpty()) {
+		if (users.isEmpty()) {
 			throw new CustomRuntimeException(NoteException.SENDER_NOT_FOUND);
 		}
-
-		List<NoteSenderListResponse> users = userRepository.findAllById(userIds)
-			.stream()
-			.map(NoteSenderListResponse::toNoteSenderListResponse)
-			.toList();
 
 		return baseResponseService.getSuccessResponse(users);
 	}
@@ -139,23 +134,25 @@ public class NoteService {
 		}
 	}
 
-	private List<Long> getUserIdsByRole(User user) {
-		return user.getRole() == Role.ROLE_HOST ? getUserIdsForHost(user) : getUserIdsForGuest(user);
+	private List<NoteSenderListResponse> getUsersByRole(User user) {
+		return user.getRole() == Role.ROLE_HOST ? getHostUserMatchingGuests(user.getId()) : getGuestUserMatchingHosts(user.getId());
 	}
 
-	private List<Long> getUserIdsForHost(User user) {
-		return matchingRepository.findAllByPlaceUserIdAndStatusIn(user.getId(), List.of(Status.PENDING, Status.STORED))
+	private List<NoteSenderListResponse> getHostUserMatchingGuests(Long hostId) {
+		return matchingRepository.findAllByPlaceUserIdAndStatusIn(hostId, List.of(Status.PENDING, Status.STORED))
 			.stream()
-			.map(matching -> matching.getProduct().getUser().getId())
+			.map(matching -> matching.getProduct().getUser())
 			.distinct()
+			.map(NoteSenderListResponse::toNoteSenderListResponse)
 			.collect(Collectors.toList());
 	}
 
-	private List<Long> getUserIdsForGuest(User user) {
-		return matchingRepository.findAllByProductUserIdAndStatusIn(user.getId(), List.of(Status.PENDING, Status.STORED))
+	private List<NoteSenderListResponse> getGuestUserMatchingHosts(Long guestId) {
+		return matchingRepository.findAllByProductUserIdAndStatusIn(guestId, List.of(Status.PENDING, Status.STORED))
 			.stream()
-			.map(matching -> matching.getPlace().getUser().getId())
+			.map(matching -> matching.getPlace().getUser())
 			.distinct()
+			.map(NoteSenderListResponse::toNoteSenderListResponse)
 			.collect(Collectors.toList());
 	}
 }
