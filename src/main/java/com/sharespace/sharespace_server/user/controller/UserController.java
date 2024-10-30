@@ -21,40 +21,45 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
 
+    // task: 회원가입
     @PostMapping("/register")
     public BaseResponse<UserRegisterResponse> register(@Valid @RequestBody UserRegisterRequest request) {
         return userService.register(request);
     }
 
+    // task: 이메일 인증
     @PostMapping("/validate")
     public BaseResponse<Void> emailValidate(@Valid @RequestBody UserEmailValidateRequest request) {
         return userService.emailValidate(request);
     }
 
+    // task: 유저 정보 수정
     @PutMapping("/update")
     public BaseResponse<Void> update(@Valid @ModelAttribute UserUpdateRequest request, HttpServletRequest httpRequest) {
         Long userId = RequestParser.extractUserId(httpRequest);
         return userService.update(request, userId);
     }
 
+    // task: 로그인 유저 주소 가져오기
     @GetMapping("/place")
     public BaseResponse<String> getPlace(HttpServletRequest request) {
         Long userId = RequestParser.extractUserId(request);
         return userService.getPlace(userId);
     }
 
+    // task: 로그인 유저 정보 가져오기
     @GetMapping("/detail")
     public BaseResponse<UserGetInfoResponse> getInfo(HttpServletRequest request) {
         Long userId = RequestParser.extractUserId(request);
         return userService.getInfo(userId);
     }
 
+    // task: 로그아웃
     @PostMapping("/logout")
     public BaseResponse<Void> logout(@CookieValue("accessToken") String accessToken,
-                                     @CookieValue("refreshToken") String refreshToken,
                                      HttpServletResponse response, HttpServletRequest request) {
         Long userId = RequestParser.extractUserId(request);
-        return userService.logout(accessToken, refreshToken, response, userId);
+        return userService.logout(accessToken, response, userId);
     }
 
     @GetMapping("/checkLogin")
