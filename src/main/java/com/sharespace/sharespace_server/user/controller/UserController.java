@@ -1,6 +1,7 @@
 package com.sharespace.sharespace_server.user.controller;
 
 import com.sharespace.sharespace_server.global.response.BaseResponse;
+import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
@@ -13,8 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import static com.sharespace.sharespace_server.global.utils.RequestParser.extractUserId;
 
 @RestController
 @RequestMapping(value = "/user")
@@ -34,19 +33,19 @@ public class UserController {
 
     @PutMapping("/update")
     public BaseResponse<Void> update(@Valid @ModelAttribute UserUpdateRequest request, HttpServletRequest httpRequest) {
-        Long userId = extractUserId(httpRequest);
+        Long userId = RequestParser.extractUserId(httpRequest);
         return userService.update(request, userId);
     }
 
     @GetMapping("/place")
     public BaseResponse<String> getPlace(HttpServletRequest request) {
-        Long userId = extractUserId(request);
+        Long userId = RequestParser.extractUserId(request);
         return userService.getPlace(userId);
     }
 
     @GetMapping("/detail")
     public BaseResponse<UserGetInfoResponse> getInfo(HttpServletRequest request) {
-        Long userId = extractUserId(request);
+        Long userId = RequestParser.extractUserId(request);
         return userService.getInfo(userId);
     }
 
@@ -54,7 +53,7 @@ public class UserController {
     public BaseResponse<Void> logout(@CookieValue("accessToken") String accessToken,
                                      @CookieValue("refreshToken") String refreshToken,
                                      HttpServletResponse response, HttpServletRequest request) {
-        Long userId = extractUserId(request);
+        Long userId = RequestParser.extractUserId(request);
         return userService.logout(accessToken, refreshToken, response, userId);
     }
 
@@ -65,7 +64,7 @@ public class UserController {
 
     @GetMapping("/userId")
     public BaseResponse<UserGetIdResponse> getUserId(HttpServletRequest request) {
-        Long userId = extractUserId(request);
+        Long userId = RequestParser.extractUserId(request);
         return userService.getUserId(userId);
     }
 
