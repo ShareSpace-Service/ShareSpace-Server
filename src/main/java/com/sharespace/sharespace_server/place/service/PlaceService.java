@@ -10,7 +10,6 @@ import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.ImageException;
 import com.sharespace.sharespace_server.global.exception.error.MatchingException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
-import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
@@ -24,8 +23,6 @@ import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.place.dto.PlacesResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
-import com.sharespace.sharespace_server.product.entity.Product;
-import com.sharespace.sharespace_server.product.repository.ProductRepository;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 
@@ -40,7 +37,6 @@ public class PlaceService {
 	final BaseResponseService baseResponseService;
 	private final UserRepository userRepository;
 	private final PlaceRepository placeRepository;
-	private final ProductRepository productRepository;
 	private final LocationTransform locationTransform;
 	private final S3ImageUpload s3ImageUpload;
 	private final MatchingRepository matchingRepository;
@@ -134,7 +130,6 @@ public class PlaceService {
 		List<String> combinedImageUrls = s3ImageUpload.uploadImages(placeRequest.getImageUrl(), "place/" +user.getId());
 
 		Place place = Place.from(placeRequest, user, combinedImageUrls);
-
 		placeRepository.save(place);
 
 		return baseResponseService.getSuccessResponse("장소가 성공적으로 등록되었습니다.");
@@ -177,11 +172,6 @@ public class PlaceService {
 	private Matching findMatchingById(Long matchingId) {
 		return matchingRepository.findById(matchingId)
 			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
-	}
-
-	private Product findProductById(Long productId) {
-		return productRepository.findById(productId)
-			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
 	}
 
 	private Place findPlaceById(Long placeId) {
