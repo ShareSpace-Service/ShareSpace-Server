@@ -13,12 +13,4 @@ public enum Category {
 	LARGE(2);
 
 	final Integer value;
-
-	public List<Category> getRelatedCategories() {
-		return switch (this) {
-			case SMALL -> List.of(SMALL, MEDIUM, LARGE);
-			case MEDIUM -> List.of(MEDIUM, LARGE);
-			case LARGE -> List.of(LARGE);
-		};
-	}
 }

@@ -6,24 +6,23 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.sharespace.sharespace_server.global.enums.Category;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.ImageException;
+import com.sharespace.sharespace_server.global.exception.error.MatchingException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
-import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
+import com.sharespace.sharespace_server.matching.entity.Matching;
+import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
 import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
 import com.sharespace.sharespace_server.place.dto.PlaceRequest;
 import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.place.dto.PlacesResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
-import com.sharespace.sharespace_server.product.entity.Product;
-import com.sharespace.sharespace_server.product.repository.ProductRepository;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 
@@ -38,9 +37,9 @@ public class PlaceService {
 	final BaseResponseService baseResponseService;
 	private final UserRepository userRepository;
 	private final PlaceRepository placeRepository;
-	private final ProductRepository productRepository;
 	private final LocationTransform locationTransform;
 	private final S3ImageUpload s3ImageUpload;
+	private final MatchingRepository matchingRepository;
 
 	/**
 	 * <p>모든 장소 리스트를 불러와 게스트 사용자 정보를 포함한 PlacesResponse 리스트로 반환합니다.</p>
@@ -64,27 +63,28 @@ public class PlaceService {
 	}
 
 	/**
-	 * <p>주어진 상품의 카테고리와 관련된 장소 리스트를 조회하여 PlacesResponse 리스트로 반환합니다.</p>
+	 * <p>주어진 매칭 ID에 해당하는 상품의 카테고리에 맞는 장소 리스트를 조회하여 PlacesResponse 리스트 형태로 반환</p>
 	 *
-	 * <p>이 메서드는 주어진 상품 ID를 통해 상품을 조회한 후, 해당 상품의 카테고리와 그와 연관된 카테고리
-	 * (예: 상품이 "Medium"인 경우 "Medium"과 "Large" 카테고리)를 기반으로 장소를 조회하고, 이를 게스트 사용자 정보를
-	 * 포함한 PlacesResponse 리스트로 변환하여 반환합니다.</p>
+	 * <p>이 메서드는 주어진 매칭 ID를 통해 해당 매칭과 연결된 상품을 조회하고, 상품의 카테고리를 기준으로
+	 * 동일하거나 더 높은 카테고리를 가진 장소들을 필터링한다. 필터링된 장소들은 게스트 사용자의 정보를 포함하여
+	 * PlacesResponse 객체 리스트로 반환한다.</p>
 	 *
-	 * @param productId 상품 ID (Long 타입)
-	 * @param userId 현재 로그인한 사용자 Id
-	 * @return 상품 카테고리에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트를 성공 응답 형태로 반환합니다.
+	 * @param matchingId 매칭 ID (Long 타입)
+	 * @param userId 현재 로그인한 사용자 ID
+	 * @return 상품 카테고리에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트로 반환
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(Long productId, Long userId) {
-		User guest = findByUser(userId);
-		Product product = findProductById(productId);
+	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(Long matchingId, Long userId) {
+		User user = findByUser(userId);
 
-		List<Category> categories = product.getCategory().getRelatedCategories();
+		Matching matching = findMatchingById(matchingId);
+		Integer category = matching.getProduct().getCategory().getValue();
 
-		List<PlacesResponse> places = placeRepository.findAllByCategoryIn(categories).stream()
-			.map(place -> PlacesResponse.from(place, guest))
-			.toList();
+		List<PlacesResponse> places = placeRepository.findAll().stream()
+			.filter(place -> place.getCategory().getValue() <= category)
+			.map(place -> PlacesResponse.from(place, user))
+			.collect(Collectors.toList());
 
 		return baseResponseService.getSuccessResponse(places);
 	}
@@ -130,7 +130,6 @@ public class PlaceService {
 		List<String> combinedImageUrls = s3ImageUpload.uploadImages(placeRequest.getImageUrl(), "place/" +user.getId());
 
 		Place place = Place.from(placeRequest, user, combinedImageUrls);
-
 		placeRepository.save(place);
 
 		return baseResponseService.getSuccessResponse("장소가 성공적으로 등록되었습니다.");
@@ -170,9 +169,9 @@ public class PlaceService {
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 	}
 
-	private Product findProductById(Long productId) {
-		return productRepository.findById(productId)
-			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
+	private Matching findMatchingById(Long matchingId) {
+		return matchingRepository.findById(matchingId)
+			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
 	}
 
 	private Place findPlaceById(Long placeId) {

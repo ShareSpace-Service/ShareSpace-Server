@@ -39,9 +39,9 @@ public class PlaceController {
 
 	// task: product 카테고리에 맞는 장소 리스트 조회
 	@GetMapping("/searchByProduct")
-	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(@RequestParam Long productId, HttpServletRequest httpRequest) {
+	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(@RequestParam Long matchingId, HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
-		return placeService.getLocationOptionsForItem(productId, userId);
+		return placeService.getLocationOptionsForItem(matchingId, userId);
 	}
 
 	// task: 장소 디테일 조회
