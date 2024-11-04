@@ -35,7 +35,7 @@ jobs:
 
       - name: docker image build
         run: |
-          docker build -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/sharespace .
+          docker build -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/sharespace:latest .
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
