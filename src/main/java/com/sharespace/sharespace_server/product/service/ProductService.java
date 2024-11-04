@@ -54,7 +54,6 @@ public class ProductService {
         matchingRepository.save(matching);
 
         ProductRegisterResponse response = ProductRegisterResponse.builder()
-            .productId(product.getId())
             .matchingId(matching.getId())
             .build();
 
