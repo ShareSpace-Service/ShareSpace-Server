@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public enum MatchingException implements CustomException {
-	MATCHING_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 매칭입니다."),
+	MATCHING_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 매칭이거나 물품이 누락되었습니다."),
 	CATEGORY_NOT_MATCHED(HttpStatus.BAD_REQUEST, "Category에 알맞은 물품을 보관 요청해야합니다."),
 	MATCHING_PRODUCT_NOT_IN_USER(HttpStatus.BAD_REQUEST, "해당 매칭의 Product를 가지고 있지 않는 유저입니다."),
 	MATCHING_PLACE_NOT_IN_USER(HttpStatus.BAD_REQUEST, "해당 매칭의 Place를 가지고 있지 않는 유저입니다."),

@@ -23,6 +23,7 @@ import com.sharespace.sharespace_server.matching.dto.request.MatchingCompleteSto
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUpdateRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUploadImageRequest;
+import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllProductWithRoleResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
@@ -41,7 +42,7 @@ public class MatchingController {
 	private final MatchingService matchingService;
 
 	@GetMapping
-	public BaseResponse<List<MatchingShowAllResponse>> showList(
+	public BaseResponse<MatchingShowAllProductWithRoleResponse> showList(
 		@RequestParam(value = "status", required = false) Status status,
 		HttpServletRequest request) {
 		Long userId = extractUserId(request);
@@ -116,5 +117,14 @@ public class MatchingController {
 		return matchingService.updateMatchingWithPlace(matchingId, matchingUpdateRequest, userId);
 	}
 
-}
+	@GetMapping("/by-place")
+	public BaseResponse<List<MatchingShowAllResponse>> getProductsByPlace(
+		@RequestParam Long placeId,
+		HttpServletRequest request
+	) {
+		Long userId = extractUserId(request);
+		return matchingService.getProductsByPlace(placeId, userId);
+	}
 
+
+}

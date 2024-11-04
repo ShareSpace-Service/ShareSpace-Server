@@ -5,13 +5,19 @@ import com.sharespace.sharespace_server.global.exception.CustomException;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.JwtException;
 import com.sharespace.sharespace_server.jwt.domain.JwtProvider;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -30,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
 
-    private final String[] whiteListUris = new String[] {"/login", "/user/login", "/user/register", "/user/checkLogin"};
+    private final String[] whiteListUris = new String[] {"/login", "/user/login", "/user/register", "/user/checkLogin", "/token/reissue", "/logout"};
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -45,7 +51,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
             String jwt = extractAccessToken(request);
-            request.setAttribute("userId", extractUserIdFromToken(jwtProvider.getClaims(jwt)));
+            try {
+                request.setAttribute("userId", extractUserIdFromToken(jwtProvider.getClaims(jwt)));
+            } catch (ExpiredJwtException e) {
+                // 에외가 터지면 클라이언트에게 401 에러와 Message 넘겨줘야됨
+                sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.EXPIRED_JWT_EXCEPTION));
+                return;
+            } catch (MalformedJwtException e) {
+                // 토큰 형식이 잘못되었을 때
+                sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.MALFORMED_JWT_EXCEPTION));
+                return;
+            }
+
+
             try {
                 Authentication authentication = jwtProvider.getAuthentication(jwt);
                 SecurityContextHolder.getContext().setAuthentication(authentication);

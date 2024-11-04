@@ -15,6 +15,7 @@ import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
+import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
 import com.sharespace.sharespace_server.user.dto.UserUpdateRequest;
 import com.sharespace.sharespace_server.user.entity.User;
 import com.sharespace.sharespace_server.user.repository.UserRepository;
@@ -30,7 +31,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -54,7 +54,7 @@ public class UserService {
 
 
     @Transactional
-    public BaseResponse<Long> register(UserRegisterRequest request) {
+    public BaseResponse<UserRegisterResponse> register(UserRegisterRequest request) {
 
         // 이메일 중복 검사 메소드 호출
         emailDuplicate(request.getEmail());
@@ -87,7 +87,10 @@ public class UserService {
         // 이메일 전송 메소드 호출
         sendEmail(request.getEmail());
 
-        return baseResponseService.getSuccessResponse(user.getId());
+        return baseResponseService.getSuccessResponse(UserRegisterResponse.
+            builder()
+            .userId(user.getId())
+            .build());
     }
 
     // 이메일 인증여부 업데이트
@@ -96,6 +99,7 @@ public class UserService {
 
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
         // 이메일 인증 확인 메소드 호출
+        System.out.println(request.getValidationNumber());
         verifyCode(user.getEmail(), request.getValidationNumber());
 
         user.setEmailValidated(true);
@@ -133,6 +137,7 @@ public class UserService {
         return baseResponseService.getSuccessResponse();
     }
 
+    // 로그인 유저의 주소를 가져오는 메소드
     @Transactional
     public BaseResponse<String> getPlace(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
@@ -140,6 +145,7 @@ public class UserService {
         return baseResponseService.getSuccessResponse(location);
     }
 
+    // 로그인 유저의 정보를 가져오는 메소드
     @Transactional
     public BaseResponse<UserGetInfoResponse> getInfo(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
@@ -157,8 +163,9 @@ public class UserService {
 
     // 로그아웃
     @Transactional
-    public BaseResponse<Void> logout(String accessToken, String refreshToken, HttpServletResponse response, Long userId) {
+    public BaseResponse<Void> logout(String accessToken, HttpServletResponse response, Long userId) {
 
+        // 토큰을 찾지 못했을 경우 예외처리
         Token token = tokenJpaRepository.findByUserId(userId).orElseThrow(() -> new CustomRuntimeException(JwtException.REFRESH_TOKEN_NOT_FOUND_EXCEPTION));
 
         // 1. AccessToken 블랙리스트에 추가
@@ -168,12 +175,10 @@ public class UserService {
         expireCookie(response, "accessToken");
         expireCookie(response, "refreshToken");
 
-
         // 로그아웃시 연결 해제
         notificationService.removeSseEmitter(userId);
 
-
-
+        // DB에서 토큰 삭제
         tokenJpaRepository.delete(token);
 
         return baseResponseService.getSuccessResponse();
@@ -289,6 +294,7 @@ public class UserService {
         }
     }
 
+    // 유저 로그인시 존재하는 ID(email)인지 확인 메소드
     public boolean checkUserPresents(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
             return true;
@@ -318,6 +324,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // 쿠키 만료처리 메소드
     private void expireCookie(HttpServletResponse response, String tokenName) {
         Cookie cookie = new Cookie(tokenName, null);
         cookie.setHttpOnly(true);

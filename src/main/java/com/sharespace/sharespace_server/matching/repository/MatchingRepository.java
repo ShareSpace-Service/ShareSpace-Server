@@ -61,9 +61,18 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 	List<Matching> findAllWithPlace();
 
 	// status가 특정 값이고, startDate + confirmDays가 오늘 날짜(today) 이전 또는 같은 Matching 엔티티들을 조회
-	@Query("SELECT m FROM Matching m WHERE m.status = :status AND m.startDate + :confirmDays <= :today")
+	@Query("SELECT m FROM Matching m "
+		+ "WHERE m.status = :status AND "
+		+ "m.startDate + :confirmDays <= :today")
 	List<Matching> findEligibleForNotification(Status status, int confirmDays, LocalDateTime today);
 
 	Optional<Matching> findMatchingByProductIdAndPlaceId(Long productId, Long placeId);
+
+	@Query("SELECT m FROM Matching m "
+		+ "JOIN FETCH m.product p "
+		+ "WHERE (m.status = 'REJECTED' OR m.status = 'UNASSIGNED') "
+		+ "AND p.user.id = :userId")
+	List<Matching> findMatchingsWithProductByStatus(Long userId);
+
 
 }
