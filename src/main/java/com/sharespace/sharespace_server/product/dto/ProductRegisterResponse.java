@@ -10,7 +10,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class ProductRegisterResponse {
-	private Long productId;
 	// 2024-10-27 matchingId 추가
 	private Long matchingId;
 }
