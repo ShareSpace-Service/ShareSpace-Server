@@ -121,18 +121,19 @@ public class MatchingService {
 		// Place와 Product를 찾고, 유효성 검증
 		Place place = placeRepository.findById(request.getPlaceId())
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
-		Product product = productRepository.findById(request.getProductId())
-			.orElseThrow(() -> new CustomRuntimeException(ProductException.PRODUCT_NOT_FOUND));
-
-		// productId와 placeId가 이미 존재하는 매칭일 경우 예외 던짐
-		if (matchingRepository.findMatchingByProductIdAndPlaceId(product.getId(), place.getId()).isPresent()) {
-			throw new CustomRuntimeException(MatchingException.ALREADY_REQUESTED_PRODUCT_TO_SAME_PLACE);
-		}
-
+		// Matching을 찾는 것은 곧 Product에 대한 유효성 검증이기도 함
 		Matching matching = matchingRepository.findById(request.getMatchingId())
 			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
 
+
+		// productId와 placeId가 이미 존재하는 매칭일 경우 예외 던짐 => 무한 매칭 방지
+		if (matchingRepository.findMatchingByProductIdAndPlaceId(matching.getProduct().getId(), place.getId()).isPresent()) {
+			throw new CustomRuntimeException(MatchingException.ALREADY_REQUESTED_PRODUCT_TO_SAME_PLACE);
+		}
+		
+
 		// Product와 Place에서 Category와 Period에 대해 유효성 검증 수행
+		Product product = matching.getProduct();
 		product.validateCategoryForPlace(place);
 		product.validatePeriodForPlace(place);
 		product.validateProductOwnershipForUser(user);
