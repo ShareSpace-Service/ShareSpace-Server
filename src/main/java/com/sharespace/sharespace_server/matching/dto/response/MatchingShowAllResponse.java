@@ -16,5 +16,4 @@ public class MatchingShowAllResponse {
 	private List<String> imageUrl; // product 이미지
 	private Status status;
 	private Integer distance;
-	private String role;
 }

@@ -10,7 +10,5 @@ public class MatchingKeepRequest {
 	@NotNull
 	private Long matchingId;
 	@NotNull
-	private Long productId;
-	@NotNull
 	private Long placeId;
 }

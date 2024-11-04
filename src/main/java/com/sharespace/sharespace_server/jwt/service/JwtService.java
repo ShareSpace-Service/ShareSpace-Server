@@ -74,20 +74,14 @@ public class JwtService {
     }
 
     public BaseResponse<HttpStatus> reissueAccessToken(String refreshToken, HttpServletResponse response) {
-
         try {
-            // refreshToken 유효성 검증
-            Claims claims = jwtProvider.getClaims(refreshToken);
+            Token token = tokenJpaRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
-            // refreshToken에 포함된 userId로 새로운 accessToken 생성
-            Long userId = (Long) claims.get("userId");
-            User user = tokenJpaRepository.findByUserId(userId)
-                    .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND)).getUser();
-
-            String newAccessToken = jwtProvider.reissueAccessToken(Collections.singletonMap("userId", userId));
+            String newAccessToken = jwtProvider.reissueAccessToken(Collections.singletonMap("userId", token.getUser().getId()));
 
             // 새로운 accessToken을 쿠키에 저장
-            addJwtToCookie(response, newAccessToken, "accessToken", 3600);  // 예: 1시간
+            addJwtToCookie(response, "accessToken", newAccessToken, 3600);  // 예: 1시간
 
             return baseResponseService.getSuccessResponse(HttpStatus.OK);
 
@@ -103,7 +97,7 @@ public class JwtService {
 
     private void addJwtToCookie(HttpServletResponse response, String tokenName, String token, int maxAge) {
         Cookie cookie = new Cookie(tokenName, token);
-        cookie.setHttpOnly(true);
+        cookie.setHttpOnly(false);
         cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
