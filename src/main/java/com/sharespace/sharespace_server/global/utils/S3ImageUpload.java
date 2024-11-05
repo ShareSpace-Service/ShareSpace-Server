@@ -3,8 +3,10 @@ package com.sharespace.sharespace_server.global.utils;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.ImageException;
 
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -141,9 +144,10 @@ public class S3ImageUpload {
 	 * @Author thereisname
 	 */
 	public List<String> uploadImages(List<MultipartFile> multipartFiles, String dirName) {
-		List<String> uploadedUrls = new ArrayList<>();
-		multipartFiles.forEach(url -> uploadedUrls.add(uploadSingleImage(url, dirName)));
-		return uploadedUrls;
+		return multipartFiles.stream()
+			.map(file -> uploadSingleImage(file, dirName))
+			.collect(Collectors.toList());
+
 	}
 
 	/**
@@ -157,17 +161,6 @@ public class S3ImageUpload {
 		} catch (AmazonS3Exception e) {
 			log.error("Image Delete Error: {}", e.getMessage());
 			throw new CustomRuntimeException(ImageException.IMAGE_DELETE_FAIL);
-		}
-	}
-
-	/**
-	 * 이미지가 존재할 경우 삭제
-	 *
-	 * @param deleteImageUrl 삭제할 이미지 URL
-	 */
-	private void deleteImageIfExists(String deleteImageUrl) {
-		if (deleteImageUrl != null && !deleteImageUrl.isEmpty()) {
-			deleteImage(deleteImageUrl);
 		}
 	}
 
@@ -197,7 +190,7 @@ public class S3ImageUpload {
 		List<String> updatedUrls = new ArrayList<>(Arrays.asList(existingImageUrl.split(",")));
 
 		if (deleteImageUrls != null && !deleteImageUrls.isEmpty()) {
-			deleteImageUrls.forEach(this::deleteImageIfExists);
+			deleteImages(deleteImageUrls);
 			updatedUrls.removeAll(deleteImageUrls);
 		}
 
@@ -206,6 +199,40 @@ public class S3ImageUpload {
 		}
 
 		return updatedUrls;
+	}
+
+	/**
+	 * 다중 이미지 삭제 로직
+	 *
+	 * @param deleteImageUrls 삭제할 이미지의 URL 목록
+	 */
+	private void deleteImages(List<String> deleteImageUrls) {
+		try {
+			List<KeyVersion> keys = deleteImageUrls.stream()
+				.map(this::extractKeyFromUrl)
+				.map(KeyVersion::new)
+				.collect(Collectors.toList());
+
+			DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(bucketName)
+				.withKeys(keys)
+				.withQuiet(false);
+
+			amazonS3.deleteObjects(multiObjectDeleteRequest);
+		} catch (AmazonS3Exception e) {
+			log.error("Error deleting objects from S3: {}", e.getMessage());
+			throw new CustomRuntimeException(ImageException.IMAGE_DELETE_FAIL);
+		}
+	}
+
+	/**
+	 * 삭제할 이미지가 존재할 경우 삭제
+	 *
+	 * @param deleteImageUrl 삭제할 이미지 URL
+	 */
+	private void deleteImageIfExists(String deleteImageUrl) {
+		if (deleteImageUrl != null && !deleteImageUrl.isEmpty()) {
+			deleteImage(deleteImageUrl);
+		}
 	}
 
 	/**
@@ -244,7 +271,7 @@ public class S3ImageUpload {
 	 */
 	private String createUniqueFileName(String dirName, String originalFileName) {
 		String extension = extractFileExtension(originalFileName);
-		return dirName + "/" + UUID.randomUUID() + "." + extension;
+		return String.format("%s/%s.%s", dirName, UUID.randomUUID(), extension);
 	}
 
 	/**
