@@ -137,17 +137,12 @@ public class NoteService {
 	 *
 	 * @param userId 현재 로그인한 사용자의 고유 ID
 	 * @return 발신 가능한 사용자 리스트를 포함한 BaseResponse 객체
-	 * @throws CustomRuntimeException 발신 가능한 대상이 없을 경우 예외 발생
 	 * @Author thereisname
 	 */
 	@Transactional
 	public BaseResponse<List<NoteSenderListResponse>> getSenderList(Long userId) {
 		User user = findUserById(userId);
 		List<NoteSenderListResponse> users = getUsersByRole(user);
-
-		if (users.isEmpty()) {
-			throw new CustomRuntimeException(NoteException.SENDER_NOT_FOUND);
-		}
 
 		return baseResponseService.getSuccessResponse(users);
 	}
