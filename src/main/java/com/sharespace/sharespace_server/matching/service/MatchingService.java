@@ -15,7 +15,6 @@ import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.MatchingException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
-import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
@@ -254,8 +253,6 @@ public class MatchingService {
 	 */
 	@Transactional
 	public BaseResponse<Void> hostAcceptRequest(MatchingHostAcceptRequestRequest request) {
-		// TODO : 호스트 유효성 검증 필요
-		// TODO : 메서드 리네임 => 거절할 수도 있고 수락할 수도 있으니까
 		Matching matching = findMatching(request.getMatchingId());
 		if (request.isAccepted()) {
 			matching.setStatus(PENDING);
@@ -346,7 +343,6 @@ public class MatchingService {
 
 	@Transactional
 	public BaseResponse<Void> uploadImage(MatchingUploadImageRequest request) {
-		// TODO : 유효성 검증;이미지 업로드의 주체는 Host여야 함
 		// NOTE : 이미지 업로드'만' 했다고 알림이 전송되어선 안됨
 		Matching matching = findMatching(request.getMatchingId());
 		// 다중 이미지 S3에 업로드

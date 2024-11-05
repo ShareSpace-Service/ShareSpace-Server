@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.note.dto.NoteDetailResponse;
@@ -32,6 +33,7 @@ public class NoteController {
 
 	// task: 받은 쪽지 전체 조회
 	@GetMapping
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<List<NoteResponse>> getNote(HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return noteService.getAllNotes(userId);
@@ -39,6 +41,7 @@ public class NoteController {
 
 	// task: 쪽지 전송
 	@PostMapping
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public  BaseResponse<String> createNote(@Valid @RequestBody NoteRequest noteRequest, HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return noteService.createNote(noteRequest, userId);
@@ -46,18 +49,21 @@ public class NoteController {
 
 	// task: 쪽지 삭제
 	@DeleteMapping
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<String> deleteNote(@RequestParam Long noteId) {
 		return noteService.deleteNote(noteId);
 	}
 
 	// task: 상세 쪽지 내용 조회
 	@GetMapping("/noteDetail")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<NoteDetailResponse> getNoteDetail(@RequestParam Long noteId) {
 		return noteService.getNoteDetail(noteId);
 	}
 
 	// task: 수신자 대상 조회
 	@GetMapping("/available")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<List<NoteSenderListResponse>> getSenderList(HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return noteService.getSenderList(userId);
