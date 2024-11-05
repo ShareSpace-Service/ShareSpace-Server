@@ -8,12 +8,10 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public enum NoteException implements CustomException {
-	NOTE_NOT_FOUND(HttpStatus.BAD_REQUEST, "작성한 쪽지가 없습니다."),
-	NOTE_FAIL_DELETE(HttpStatus.BAD_REQUEST, "쪽지 삭제에 실패하였습니다."),
-	NOTE_TITLE_ANE_CONTENT_EMPTY(HttpStatus.BAD_REQUEST, "내용을 입력해주세요"),
-	RECEIVER_NOT_FOUND(HttpStatus.BAD_REQUEST, "수신자가 입력되지 않았습니다. 수신자를 입력해 주세요 "),
-	SENDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "송산자를 찾을 수 없습니다"),
-	NOTE_NOT_MATCHING(HttpStatus.BAD_REQUEST, "쪽지를 보낼 수 없습니다.");
+	NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "작성한 쪽지가 없습니다."),
+	NOTE_FAIL_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, "쪽지 삭제에 실패하였습니다."),
+	SENDER_NOT_FOUND(HttpStatus.NOT_FOUND, "송산자를 찾을 수 없습니다"),
+	NOTE_NOT_MATCHING(HttpStatus.FORBIDDEN, "쪽지를 보낼 수 없습니다.");
 
 	private final HttpStatus status;
 	private final String message;

@@ -63,11 +63,11 @@ public class PlaceService {
 	}
 
 	/**
-	 * <p>주어진 매칭 ID에 해당하는 상품의 카테고리에 맞는 장소 리스트를 조회하여 PlacesResponse 리스트 형태로 반환</p>
+	 * <p>주어진 매칭 ID에 해당하는 상품의 카테고리와 보관일수가 맞는 장소 리스트를 조회하여 PlacesResponse 리스트 형태로 반환</p>
 	 *
 	 * <p>이 메서드는 주어진 매칭 ID를 통해 해당 매칭과 연결된 상품을 조회하고, 상품의 카테고리를 기준으로
-	 * 동일하거나 더 높은 카테고리를 가진 장소들을 필터링한다. 필터링된 장소들은 게스트 사용자의 정보를 포함하여
-	 * PlacesResponse 객체 리스트로 반환한다.</p>
+	 * 동일하거나 더 높은 카테고리와 product의 최대보관일수를 비교하여 초과되지 않은 장소를 필터링한다.
+	 * 필터링된 장소들은 게스트 사용자의 정보를 포함하여 PlacesResponse 객체 리스트로 반환한다.</p>
 	 *
 	 * @param matchingId 매칭 ID (Long 타입)
 	 * @param userId 현재 로그인한 사용자 ID
@@ -79,10 +79,10 @@ public class PlaceService {
 		User user = findByUser(userId);
 
 		Matching matching = findMatchingById(matchingId);
-		Integer category = matching.getProduct().getCategory().getValue();
 
-		List<PlacesResponse> places = placeRepository.findAll().stream()
-			.filter(place -> place.getCategory().getValue() <= category)
+		List<PlacesResponse> places = placeRepository.findPlacesByPeriod(matching.getProduct().getPeriod())
+			.stream()
+			.filter(place -> place.getCategory().getValue() <= matching.getProduct().getCategory().getValue())
 			.map(place -> PlacesResponse.from(place, user))
 			.collect(Collectors.toList());
 

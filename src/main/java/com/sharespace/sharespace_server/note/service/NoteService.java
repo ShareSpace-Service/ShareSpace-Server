@@ -10,6 +10,7 @@ import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.NoteException;
+import com.sharespace.sharespace_server.global.exception.error.PlaceException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
@@ -137,17 +138,12 @@ public class NoteService {
 	 *
 	 * @param userId 현재 로그인한 사용자의 고유 ID
 	 * @return 발신 가능한 사용자 리스트를 포함한 BaseResponse 객체
-	 * @throws CustomRuntimeException 발신 가능한 대상이 없을 경우 예외 발생
 	 * @Author thereisname
 	 */
 	@Transactional
 	public BaseResponse<List<NoteSenderListResponse>> getSenderList(Long userId) {
 		User user = findUserById(userId);
 		List<NoteSenderListResponse> users = getUsersByRole(user);
-
-		if (users.isEmpty()) {
-			throw new CustomRuntimeException(NoteException.SENDER_NOT_FOUND);
-		}
 
 		return baseResponseService.getSuccessResponse(users);
 	}
@@ -178,7 +174,7 @@ public class NoteService {
 	private void validateMatchingForHostAndGuest(User host, User guest) {
 		Long placeId = placeRepository.findByUserId(host.getId())
 			.map(Place::getId)
-			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING));
+			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 
 		List<Long> productIds = productRepository.findAllByUserId(guest.getId()).stream()
 			.map(Product::getId)
