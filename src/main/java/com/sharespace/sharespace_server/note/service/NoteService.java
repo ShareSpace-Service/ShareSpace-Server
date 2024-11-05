@@ -10,6 +10,7 @@ import com.sharespace.sharespace_server.global.enums.Role;
 import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.NoteException;
+import com.sharespace.sharespace_server.global.exception.error.PlaceException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
@@ -173,7 +174,7 @@ public class NoteService {
 	private void validateMatchingForHostAndGuest(User host, User guest) {
 		Long placeId = placeRepository.findByUserId(host.getId())
 			.map(Place::getId)
-			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING));
+			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 
 		List<Long> productIds = productRepository.findAllByUserId(guest.getId()).stream()
 			.map(Product::getId)
