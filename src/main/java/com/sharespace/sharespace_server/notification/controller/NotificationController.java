@@ -3,6 +3,7 @@ package com.sharespace.sharespace_server.notification.controller;
 
 import static com.sharespace.sharespace_server.global.utils.RequestParser.*;
 
+import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
@@ -25,11 +26,13 @@ public class NotificationController {
 	private final NotificationService notificationService;
 
 	@GetMapping(value = "/sse/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public SseEmitter subscribe(@PathVariable Long userId) {
 		return notificationService.subscribe(userId);
 	}
 
 	@GetMapping()
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<List<NotificationAllResponse>> getNotifications(
 		HttpServletRequest request,
 		@RequestParam int page,
@@ -38,6 +41,7 @@ public class NotificationController {
 		return notificationService.getNotifications(userId, page, size);
 	}
 	@DeleteMapping()
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	BaseResponse<Void> deleteNotifcation(@RequestParam Long notificationId) {
 		return notificationService.deleteNotifcation(notificationId);
 	}

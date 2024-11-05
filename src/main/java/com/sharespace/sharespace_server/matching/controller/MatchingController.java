@@ -2,9 +2,8 @@ package com.sharespace.sharespace_server.matching.controller;
 
 import static com.sharespace.sharespace_server.global.utils.RequestParser.*;
 
+import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.enums.Status;
-import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
-import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +41,7 @@ public class MatchingController {
 	private final MatchingService matchingService;
 
 	@GetMapping
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<MatchingShowAllProductWithRoleResponse> showList(
 		@RequestParam(value = "status", required = false) Status status,
 		HttpServletRequest request) {
@@ -55,23 +55,21 @@ public class MatchingController {
 	}
 
 	@PutMapping("/keep")
+	@CheckPermission(roles = "ROLE_GUEST")
 	public BaseResponse<Void> keep(@Valid @RequestBody MatchingKeepRequest matchingRequest, HttpServletRequest servletRequest) {
-		String currentUserRole = getCurrentUserRole();
-		// TODO : Spring AOP 사용하여 권한 관련 로직 중앙화하기
-		if (!currentUserRole.equals("ROLE_GUEST")) {
-			throw new CustomRuntimeException(UserException.NOT_AUTHORIZED);
-		}
 		Long userId = extractUserId(servletRequest);
 		return matchingService.keep(matchingRequest, userId);
 	}
 
 	@GetMapping("/keepDetail")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<MatchingShowKeepDetailResponse> showKeepDetail(@RequestParam("matchingId") @NotNull Long matchingId) {
 		return matchingService.showKeepDetail(matchingId);
 	}
 
 	// STORED -> COMPLETED
 	@PatchMapping("/completeStorage")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<Void> completeStorage(@Valid @RequestBody MatchingCompleteStorageRequest request, HttpServletRequest servletRequest) {
 		Long matchingId = request.getMatchingId();
 		Long userId = extractUserId(servletRequest);
@@ -79,6 +77,7 @@ public class MatchingController {
 	}
 
 	@GetMapping("/requestDetail")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<MatchingShowRequestDetailResponse> showRequestDetail(@RequestParam("matchingId") @NotNull Long matchingId) {
 		return matchingService.showRequestDetail(matchingId);
 	}
@@ -86,29 +85,34 @@ public class MatchingController {
 
 	// REQUESTED -> PENDING (호스트가 수락)
 	@PostMapping("/acceptRequest/host")
+	@CheckPermission(roles = "ROLE_HOST")
 	public BaseResponse<Void> hostAcceptRequest(@Valid @RequestBody MatchingHostAcceptRequestRequest request) {
 		return matchingService.hostAcceptRequest(request);
 	}
 
 	// PENDING -> STORED
 	@PatchMapping("/confirmStorage/guest")
+	@CheckPermission(roles = "ROLE_GUEST")
 	public BaseResponse<Void> guestConfirmStorage(@Valid @RequestBody MatchingGuestConfirmStorageRequest request) {
 		return matchingService.guestConfirmStorage(request);
 	}
 
 	// 보관 대기중일 때, Host와 Guest는 '요청 취소'를 할 수 있다.
 	@PostMapping("/cancelRequest")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<Void> cancelRequest(@RequestParam("matchingId") Long matchingId, HttpServletRequest request) {
 		Long userId = extractUserId(request);
 		return matchingService.cancelRequest(matchingId, userId);
 	}
 
 	@PostMapping("/uploadImage/host")
+	@CheckPermission(roles = "ROLE_HOST")
 	public BaseResponse<Void> uploadImage(@Valid @ModelAttribute MatchingUploadImageRequest request) {
 		return matchingService.uploadImage(request);
 	}
 
 	@PatchMapping("/{matchingId}")
+	@CheckPermission(roles = "ROLE_GUEST")
 	public BaseResponse<Void> updateMatching(@PathVariable Long matchingId,
 		@RequestBody MatchingUpdateRequest matchingUpdateRequest,
 		HttpServletRequest request
@@ -118,6 +122,7 @@ public class MatchingController {
 	}
 
 	@GetMapping("/by-place")
+	@CheckPermission(roles = "ROLE_GUEST")
 	public BaseResponse<List<MatchingShowAllResponse>> getProductsByPlace(
 		@RequestParam Long placeId,
 		HttpServletRequest request

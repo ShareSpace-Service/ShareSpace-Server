@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.product.controller;
 
+import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.product.dto.ProductRegisterRequest;
@@ -22,6 +23,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping("/register")
+    @CheckPermission(roles = "ROLE_GUEST")
     public BaseResponse<ProductRegisterResponse> register(@Valid @ModelAttribute ProductRegisterRequest request, HttpServletRequest httpRequest) {
         Long userId = RequestParser.extractUserId(httpRequest);
         return productService.register(request, userId);

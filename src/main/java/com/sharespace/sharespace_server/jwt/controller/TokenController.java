@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.jwt.controller;
 
+import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.jwt.service.JwtService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +19,7 @@ public class TokenController {
     private final JwtService jwtService;
 
     @PostMapping("/reissue")
+    @CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
     public BaseResponse<HttpStatus> reissueAccessToken(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
         return jwtService.reissueAccessToken(refreshToken, response);
     }

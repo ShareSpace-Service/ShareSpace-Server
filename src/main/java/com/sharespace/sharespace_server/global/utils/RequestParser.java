@@ -36,6 +36,7 @@ public class RequestParser {
     public static String getCurrentUserRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String roles = authentication.getAuthorities().toString();
+
         return roles.replace("[", "").replace("]","");
     }
 }
