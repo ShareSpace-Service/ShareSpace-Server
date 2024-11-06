@@ -47,11 +47,8 @@ public class MatchingController {
 		HttpServletRequest request) {
 		Long userId = extractUserId(request);
 
-		if (status == null) {
-			return matchingService.showAll(userId);
-		} else {
-			return matchingService.showFilteredList(status, userId);
-		}
+		return status == null ?
+			matchingService.showAll(userId) : matchingService.showFilteredList(status,userId);
 	}
 
 	@PutMapping("/keep")
