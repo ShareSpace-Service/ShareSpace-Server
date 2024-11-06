@@ -409,6 +409,8 @@ public class MatchingService {
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 
 		matching.updatePlace(place);
+		// 요청받은 Host에게 알림 전송
+		notificationService.sendNotification(place.getUser().getId(), REQUEST_KEEPING_TO_HOST.getMessage());
 		return baseResponseService.getSuccessResponse();
 	}
 
