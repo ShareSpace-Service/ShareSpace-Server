@@ -175,9 +175,6 @@ public class UserService {
         expireCookie(response, "accessToken");
         expireCookie(response, "refreshToken");
 
-        // 로그아웃시 연결 해제
-        notificationService.removeSseEmitter(userId);
-
         // DB에서 토큰 삭제
         tokenJpaRepository.delete(token);
 
