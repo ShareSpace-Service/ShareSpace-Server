@@ -6,8 +6,15 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.sharespace.sharespace_server.global.exception.error.NotificationException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
@@ -30,15 +37,19 @@ import com.sharespace.sharespace_server.notification.repository.NotificationRepo
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class NotificationService {
 
-	private final ConcurrentHashMap<Long, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
+	private final Map<Long, Set<SseEmitter>> userEmitters = new ConcurrentHashMap<>();
 	private final UserRepository userRepository;
 	private final NotificationRepository notificationRepository;
 	private final BaseResponseService baseResponseService;
+	private static final long TIMEOUT = 60 * 60 * 1000L; // 1시간
+	private static final long HEARTBEAT_INTERVAL = 30 * 1000L; // 30초
 
 	/**
 	 * SSE 구독 요청 처리
@@ -46,24 +57,67 @@ public class NotificationService {
 	 * @return SseEmitter 객체를 반환해서 SSE 연결
 	 */
 	public SseEmitter subscribe(Long userId) {
-		SseEmitter emitter = new SseEmitter(30000000L);
-		sseEmitters.put(userId, emitter);
-		// 기본적으로 연결 유지
+		SseEmitter emitter = new SseEmitter(TIMEOUT);
+		
+		// 사용자별 emitter Set을 가져오거나 새로 생성
+		Set<SseEmitter> userEmitterSet = userEmitters.computeIfAbsent(userId, 
+			k -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+		userEmitterSet.add(emitter);
+		
+		// 연결 직후 첫 메시지 전송
+		sendInitialMessage(emitter);
+		
+		// 하트비트 메시지 전송 스케줄링
+		scheduleHeartbeat(userId, emitter);
+		
+		// 연결 종료 시 처리
+		emitter.onCompletion(() -> removeEmitter(userId, emitter));
+		emitter.onTimeout(() -> removeEmitter(userId, emitter));
+		emitter.onError(e -> removeEmitter(userId, emitter));
+		
+		return emitter;
+	}
+
+	private void removeEmitter(Long userId, SseEmitter emitter) {
+		Set<SseEmitter> userEmitterSet = userEmitters.get(userId);
+		if (userEmitterSet != null) {
+			userEmitterSet.remove(emitter);
+			// Set이 비어있으면 Map에서 제거
+			if (userEmitterSet.isEmpty()) {
+				userEmitters.remove(userId);
+			}
+		}
+	}
+
+	private void sendInitialMessage(SseEmitter emitter) {
 		try {
 			emitter.send(SseEmitter.event()
 				.name("INIT")
-				.data("SSE 연결됨"));
-		} catch(IOException e) {
-			emitter.completeWithError(e);
+				.data("Connected!"));
+		} catch (IOException e) {
+			emitter.complete();
+			log.error("초기 메시지 전송 실패: {}", e.getMessage());
 		}
-		// 연결이 종료되면 emitter를 제거
-		emitter.onCompletion(() -> sseEmitters.remove(userId));
-		emitter.onTimeout(() -> {
-			removeSseEmitter(userId);
-			}
-		);
+	}
 
-		return emitter;
+	private void scheduleHeartbeat(Long userId, SseEmitter emitter) {
+		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+		scheduler.scheduleAtFixedRate(() -> {
+			try {
+				Set<SseEmitter> userEmitterSet = userEmitters.get(userId);
+				if (userEmitterSet != null && userEmitterSet.contains(emitter)) {
+					emitter.send(SseEmitter.event()
+						.name("HEARTBEAT")
+						.data("❤️"));
+				} else {
+					scheduler.shutdown();
+				}
+			} catch (IOException e) {
+				removeEmitter(userId, emitter);
+				scheduler.shutdown();
+				log.error("하트비트 전송 실패: {}", e.getMessage());
+			}
+		}, 0, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -72,25 +126,28 @@ public class NotificationService {
 	 * @param message 알림 메시지 내용
 	 */
 	@Transactional
-	public void sendNotification(Long userId, String message)  {
+	public void sendNotification(Long userId, String message) {
+		Set<SseEmitter> deadEmitters = new HashSet<>();
+		Set<SseEmitter> userEmitterSet = userEmitters.get(userId);
 		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
-		Notification notification = create(user, message);
-		notificationRepository.save(notification);
-		SseEmitter emitter = sseEmitters.get(userId);
-		if (emitter != null) {
-			try {
-				NotificationResponse response = NotificationResponse.builder()
-					.notificationId(notification.getId())
-					.message(message)
-					.build();
-				emitter.send(SseEmitter.event()
-					.name("NOTIFICATION")
-					.data(response));
-			} catch (IOException e) {
-				emitter.completeWithError(e);
-				sseEmitters.remove(userId);
-			}
+                .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
+		if (userEmitterSet != null) {
+			userEmitterSet.forEach(emitter -> {
+				try {
+					emitter.send(SseEmitter.event()
+						.name("NOTIFICATION")
+						.data(message));
+					Notification notification = create(user, message);
+					notificationRepository.save(notification);
+				} catch (IOException e) {
+					deadEmitters.add(emitter);
+					log.error("알림 전송 실패: {}", e.getMessage());
+				}
+			});
+			
+			// 실패한 emitter 제거
+			deadEmitters.forEach(emitter -> removeEmitter(userId, emitter));
 		}
 	}
 
@@ -136,12 +193,5 @@ public class NotificationService {
 
 		notificationRepository.deleteById(notificationId);
 		return baseResponseService.getSuccessResponse();
-	}
-
-	public void removeSseEmitter(Long userId) {
-		SseEmitter emitter = sseEmitters.remove(userId);
-		if (emitter != null) {
-			emitter.complete();
-		}
 	}
 }

@@ -25,9 +25,10 @@ public class NotificationController {
 
 	private final NotificationService notificationService;
 
-	@GetMapping(value = "/sse/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@GetMapping(value = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
-	public SseEmitter subscribe(@PathVariable Long userId) {
+	public SseEmitter subscribe(HttpServletRequest request) {
+		Long userId = RequestParser.extractUserId(request);
 		return notificationService.subscribe(userId);
 	}
 
