@@ -5,6 +5,7 @@ import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.MatchingException;
 import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.place.entity.Place;
+import com.sharespace.sharespace_server.product.dto.ProductRegisterRequest;
 import com.sharespace.sharespace_server.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -50,6 +51,17 @@ public class Product {
 
     @Column(name = "is_placed", nullable = false)
     private Boolean isPlaced;
+
+    public static Product of(ProductRegisterRequest product, User user) {
+        return Product.builder()
+            .title(product.getTitle())
+            .category(product.getCategory())
+            .period(product.getPeriod())
+            .description(product.getDescription())
+            .user(user)
+            .isPlaced(false)
+            .build();
+    }
 
     // 물품 배정 상태를 false로 set하는 상태 변경 함수
     public void unassign() {

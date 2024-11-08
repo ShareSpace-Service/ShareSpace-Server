@@ -82,7 +82,7 @@ public class PlaceService {
 
 		List<PlacesResponse> places = placeRepository.findPlacesByPeriod(matching.getProduct().getPeriod())
 			.stream()
-			.filter(place -> place.getCategory().getValue() <= matching.getProduct().getCategory().getValue())
+			.filter(place -> matching.getProduct().getCategory().getValue() <= place.getCategory().getValue())
 			.map(place -> PlacesResponse.from(place, user))
 			.collect(Collectors.toList());
 

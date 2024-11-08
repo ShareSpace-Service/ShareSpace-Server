@@ -36,14 +36,7 @@ public class ProductService {
             throw new CustomRuntimeException(ImageException.IMAGE_REQUIRED_FIELDS_EMPTY);
         }
 
-        Product product = Product.builder()
-                .title(request.getTitle())
-                .category(request.getCategory())
-                .period(request.getPeriod())
-                .description(request.getDescription())
-                .user(user)
-                .isPlaced(false)
-                .build();
+        Product product = Product.of(request, user);
         productRepository.save(product);
 
         List<String> imagesUrl = s3ImageUpload.uploadImages(request.getImageUrl(), "product/" + product.getId());
