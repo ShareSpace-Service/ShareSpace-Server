@@ -385,7 +385,13 @@ public class MatchingService {
 			return matchingRepository.findMatchingWithProductByUserId(user.getId());
 		} else {
 			// Host면 Place + Matching 조회
-			return matchingRepository.findMatchingWithPlaceByUserId(user.getId());
+			// 2024-11-08 추가 Host는 Status가 미배정, 반려됨인 상태는 보여주지 않음
+			return matchingRepository.findMatchingWithPlaceByUserId(user.getId())
+				.stream()
+				.filter(matching -> !REJECTED.equals(matching.getStatus())
+					&& !UNASSIGNED.equals(matching.getStatus()))
+				.collect(Collectors.toList());
+
 		}
 	}
 
