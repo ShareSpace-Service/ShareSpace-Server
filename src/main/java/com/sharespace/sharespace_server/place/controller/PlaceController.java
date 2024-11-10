@@ -14,6 +14,7 @@ import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
+import com.sharespace.sharespace_server.place.dto.PlaceEditResponse;
 import com.sharespace.sharespace_server.place.dto.PlaceRequest;
 import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.place.dto.PlacesResponse;
@@ -60,6 +61,13 @@ public class PlaceController {
 	public BaseResponse<String> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest,  HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return placeService.createPlace(placeRequest, userId);
+	}
+
+	@GetMapping("/edit")
+	@CheckPermission(roles = "ROLE_HOST")
+	public BaseResponse<PlaceEditResponse> getUserPlaceForUpdate(HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return placeService.getUserPlaceForUpdate(userId);
 	}
 
 	// task: 장소 수정
