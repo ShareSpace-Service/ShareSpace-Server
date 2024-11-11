@@ -48,15 +48,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String authorizationHeader = request.getHeader(AUTHORIZATION);
+        String refreshToken = getJwtFromCookies(request, "refreshToken");
 
         if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
             String jwt = extractAccessToken(request);
             try {
                 request.setAttribute("userId", extractUserIdFromToken(jwtProvider.getClaims(jwt)));
+                Authentication authentication = jwtProvider.getAuthentication(jwt);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (ExpiredJwtException e) {
-                // 에외가 터지면 클라이언트에게 401 에러와 Message 넘겨줘야됨
-                sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.EXPIRED_JWT_EXCEPTION));
-                return;
+                if (refreshToken != null) {
+                    request.setAttribute("expiredAccessToken", true);
+                } else {
+                    sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.EXPIRED_JWT_EXCEPTION));
+                    return;
+                }
             } catch (MalformedJwtException e) {
                 // 토큰 형식이 잘못되었을 때
                 sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.MALFORMED_JWT_EXCEPTION));

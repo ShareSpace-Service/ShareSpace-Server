@@ -52,7 +52,7 @@ public class UserService {
     private final TokenJpaRepository tokenJpaRepository;
     private final NotificationService notificationService;
 
-
+    // 유저 회원가입
     @Transactional
     public BaseResponse<UserRegisterResponse> register(UserRegisterRequest request) {
 
@@ -127,6 +127,7 @@ public class UserService {
             user.setImage(newImageUrl);
         }
 
+        // 수정된 유저 정보 저장
         user.setLocation(request.getLocation());
         user.setLatitude(latitude);
         user.setLongitude(longitude);
@@ -331,6 +332,7 @@ public class UserService {
         response.addCookie(cookie);
     }
 
+    // 로그인 여부 확인 메소드
     public BaseResponse<Void> checkLogin() {
         if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
             .anyMatch(grantedAuthority -> "ROLE_ANONYMOUS".equals(grantedAuthority.getAuthority()))) {
@@ -339,6 +341,7 @@ public class UserService {
         return baseResponseService.getSuccessResponse();
     }
 
+    // 로그인 유저의 유저ID 가져오는 메소드
     public BaseResponse<UserGetIdResponse> getUserId(Long userId) {
         return baseResponseService.getSuccessResponse(
             UserGetIdResponse.builder()
