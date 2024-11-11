@@ -67,12 +67,14 @@ public class UserController {
         return userService.logout(accessToken, response, userId);
     }
 
+    // 로그인 여부 확인
     @GetMapping("/checkLogin")
     @CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
     public BaseResponse<Void> checkLogin() {
         return userService.checkLogin();
     }
 
+    // 로그인한 유저 ID 가져오기
     @GetMapping("/userId")
     @CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
     public BaseResponse<UserGetIdResponse> getUserId(HttpServletRequest request) {
