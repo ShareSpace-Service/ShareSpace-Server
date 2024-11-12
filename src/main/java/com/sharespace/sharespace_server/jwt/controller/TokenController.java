@@ -19,7 +19,6 @@ public class TokenController {
     private final JwtService jwtService;
 
     @PostMapping("/reissue")
-    @CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
     public BaseResponse<HttpStatus> reissueAccessToken(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
         return jwtService.reissueAccessToken(refreshToken, response);
     }

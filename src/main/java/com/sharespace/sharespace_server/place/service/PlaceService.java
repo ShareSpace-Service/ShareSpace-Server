@@ -18,6 +18,7 @@ import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
 import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
+import com.sharespace.sharespace_server.place.dto.PlaceEditResponse;
 import com.sharespace.sharespace_server.place.dto.PlaceRequest;
 import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.place.dto.PlacesResponse;
@@ -162,6 +163,24 @@ public class PlaceService {
 		place.updateFields(placeRequest, updatedImages);
 
 		return baseResponseService.getSuccessResponse("장소 수정 성공!");
+	}
+
+	/**
+	 * <p>장소 수정 전 기존 장소 정보 조회</p>
+	 *
+	 * <p>로그인 한 사용자의 토큰을 통해 장소 정보와 사용자 주소를 가져와 반환</p>
+	 *
+	 * @param userId 현재 로그인한 사용자 Id
+	 * @return 로그인 한 사용자의 장소 정보와 주소 반환
+	 */
+	public BaseResponse<PlaceEditResponse> getUserPlaceForUpdate(Long userId) {
+		String location = findByUser(userId).getLocation();
+
+		Place place = findPlaceByUserId(userId);
+
+		PlaceEditResponse placeEditResponse = PlaceEditResponse.of(place, location);
+
+		return baseResponseService.getSuccessResponse(placeEditResponse);
 	}
 
 	private User findByUser(Long userId) {
