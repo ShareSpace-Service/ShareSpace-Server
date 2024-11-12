@@ -45,6 +45,9 @@ public class Note {
 	@Column(name = "send_at", nullable = false)
 	public LocalDateTime send_at;
 
+	@Column(name = "is_read", nullable = false)
+	public boolean isRead;
+
 	@Builder
 	public Note(User sender, User receiver, String title, String content, LocalDateTime send_at) {
 		this.sender = sender;
