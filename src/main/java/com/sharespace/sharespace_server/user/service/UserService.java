@@ -10,9 +10,7 @@ import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.jwt.entity.Token;
 import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
-import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
-import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
@@ -50,7 +48,6 @@ public class UserService {
     private final S3ImageUpload s3ImageUpload;
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenJpaRepository tokenJpaRepository;
-    private final NotificationService notificationService;
 
     // 유저 회원가입
     @Transactional
@@ -339,13 +336,5 @@ public class UserService {
             throw new CustomRuntimeException(UserException.NOT_LOGGED_IN_USER);
         }
         return baseResponseService.getSuccessResponse();
-    }
-
-    // 로그인 유저의 유저ID 가져오는 메소드
-    public BaseResponse<UserGetIdResponse> getUserId(Long userId) {
-        return baseResponseService.getSuccessResponse(
-            UserGetIdResponse.builder()
-                .userId(userId)
-                .build());
     }
 }
