@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +19,7 @@ import com.sharespace.sharespace_server.note.dto.NoteDetailResponse;
 import com.sharespace.sharespace_server.note.dto.NoteRequest;
 import com.sharespace.sharespace_server.note.dto.NoteResponse;
 import com.sharespace.sharespace_server.note.dto.NoteSenderListResponse;
+import com.sharespace.sharespace_server.note.dto.NoteUnreadCountResponse;
 import com.sharespace.sharespace_server.note.service.NoteService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -67,5 +70,20 @@ public class NoteController {
 	public BaseResponse<List<NoteSenderListResponse>> getSenderList(HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return noteService.getSenderList(userId);
+	}
+
+	// task: 쪽지 읽음 처리
+	@PatchMapping("/{noteId}/read")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
+	public BaseResponse<Void> getUnreadNote(@PathVariable Long noteId) {
+		return noteService.markNoteAsRead(noteId);
+	}
+	
+	// task: 안읽은 쪽지 개수 조회
+	@GetMapping("/unreadNote")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
+	public BaseResponse<NoteUnreadCountResponse> markNoteAsRead(HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return noteService.getUnreadNote(userId);
 	}
 }
