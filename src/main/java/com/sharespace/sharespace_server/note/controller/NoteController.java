@@ -19,6 +19,7 @@ import com.sharespace.sharespace_server.note.dto.NoteDetailResponse;
 import com.sharespace.sharespace_server.note.dto.NoteRequest;
 import com.sharespace.sharespace_server.note.dto.NoteResponse;
 import com.sharespace.sharespace_server.note.dto.NoteSenderListResponse;
+import com.sharespace.sharespace_server.note.dto.NoteUnreadCountResponse;
 import com.sharespace.sharespace_server.note.service.NoteService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -76,5 +77,13 @@ public class NoteController {
 	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<Void> getUnreadNote(@PathVariable Long noteId) {
 		return noteService.markNoteAsRead(noteId);
+	}
+	
+	// task: 안읽은 쪽지 개수 조회
+	@GetMapping("/unreadNote")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
+	public BaseResponse<NoteUnreadCountResponse> markNoteAsRead(HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return noteService.getUnreadNote(userId);
 	}
 }

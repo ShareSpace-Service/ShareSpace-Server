@@ -20,6 +20,7 @@ import com.sharespace.sharespace_server.note.dto.NoteDetailResponse;
 import com.sharespace.sharespace_server.note.dto.NoteRequest;
 import com.sharespace.sharespace_server.note.dto.NoteResponse;
 import com.sharespace.sharespace_server.note.dto.NoteSenderListResponse;
+import com.sharespace.sharespace_server.note.dto.NoteUnreadCountResponse;
 import com.sharespace.sharespace_server.note.entity.Note;
 import com.sharespace.sharespace_server.note.repository.NoteRepository;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
@@ -160,6 +161,23 @@ public class NoteService {
 		List<NoteSenderListResponse> users = getUsersByRole(user);
 
 		return baseResponseService.getSuccessResponse(users);
+	}
+
+	/**
+	 * 받은 쪽지 중 안읽은 쪽지 개수 조회
+	 *
+	 * <p>Note 엔티티 컬럼 중 사용자가 받은 쪽지 중 is_read가 false인 값들의 개수를 조회</p>
+	 *
+	 * @param userId 현재 로그인한 사용자의 고유 ID
+	 * @return 읽지 않은 쪽지 개수 반환
+	 * @Author thereisname
+	 */
+	@Transactional
+	public BaseResponse<NoteUnreadCountResponse> getUnreadNote(Long userId) {
+		int unreadCount = noteRepository.findCountUnreadNotesByReceiverId(userId);
+		return baseResponseService.getSuccessResponse(
+			new NoteUnreadCountResponse(unreadCount)
+		);
 	}
 
 	// task: 사용자가 존재하는지 검증하고 사용자 객체 반환
