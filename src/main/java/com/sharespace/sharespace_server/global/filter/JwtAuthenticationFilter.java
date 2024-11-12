@@ -47,11 +47,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String authorizationHeader = request.getHeader(AUTHORIZATION);
-        String refreshToken = getJwtFromCookies(request, "refreshToken");
+        String jwt;
+        String refreshToken;
+        try {
+            jwt = getJwtFromCookies(request, "accessToken");
+            refreshToken = getJwtFromCookies(request, "refreshToken");
+        } catch (CustomRuntimeException e) {
+            sendJwtExceptionResponse(response, e);
+            return;
+        }
 
-        if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
-            String jwt = extractAccessToken(request);
+        if (jwt != null) {
             try {
                 request.setAttribute("userId", extractUserIdFromToken(jwtProvider.getClaims(jwt)));
                 Authentication authentication = jwtProvider.getAuthentication(jwt);
@@ -98,7 +104,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getJwtFromCookies(HttpServletRequest request, String cookieName) {
-        if (request.getCookies() == null) return null;
+        if (request.getCookies() == null) {
+            throw new CustomRuntimeException(JwtException.MISSING_COOKIE_TOKEN);
+        }
         for (Cookie cookie : request.getCookies()) {
             if (cookie.getName().equals(cookieName)) {
                 return cookie.getValue();
