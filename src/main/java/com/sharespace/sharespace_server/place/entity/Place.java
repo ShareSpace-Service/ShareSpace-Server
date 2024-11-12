@@ -77,11 +77,12 @@ public class Place {
 	}
 
 	public void updateFields(PlaceUpdateRequest placeRequest, List<String> updatedImages) {
+		Integer period = Integer.parseInt(placeRequest.getPeriod());
 		if (!Objects.equals(this.title, placeRequest.getTitle())) {
 			this.title = placeRequest.getTitle();
 		}
-		if (!Objects.equals(this.period, placeRequest.getPeriod())) {
-			this.period = placeRequest.getPeriod();
+		if (!Objects.equals(this.period, period)) {
+			this.period = period;
 		}
 		if (!Objects.equals(this.category, placeRequest.getCategory())) {
 			this.category = placeRequest.getCategory();
