@@ -20,7 +20,7 @@ public class PlaceUpdateRequest {
 	@NotNull(message = "Category를 선택해주세요")
 	private Category category;
 	@NotNull(message = "최대 보관 기간을 입력해주세요")
-	private Integer period;
+	private String period;
 	@NotNull(message = "위치 정보를 입력해주세요")
 	private String location;
 	private List<MultipartFile> newImageUrl;

@@ -4,7 +4,6 @@ import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
-import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
@@ -72,14 +71,6 @@ public class UserController {
     @CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
     public BaseResponse<Void> checkLogin() {
         return userService.checkLogin();
-    }
-
-    // 로그인한 유저 ID 가져오기
-    @GetMapping("/userId")
-    @CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
-    public BaseResponse<UserGetIdResponse> getUserId(HttpServletRequest request) {
-        Long userId = RequestParser.extractUserId(request);
-        return userService.getUserId(userId);
     }
 
 }
