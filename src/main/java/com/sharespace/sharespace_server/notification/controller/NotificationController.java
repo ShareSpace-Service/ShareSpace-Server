@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.sharespace.sharespace_server.notification.dto.response.NotificationUnreadNumberResponse;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,5 +46,24 @@ public class NotificationController {
 	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	BaseResponse<Void> deleteNotifcation(@RequestParam Long notificationId) {
 		return notificationService.deleteNotifcation(notificationId);
+	}
+
+	@PatchMapping("/read")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
+	BaseResponse<Void> readAllNotifications(HttpServletRequest request) {
+		Long userId = extractUserId(request);
+		return notificationService.readAllNotifications(userId);
+	}
+
+	@GetMapping("/unread-alarms")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
+	BaseResponse<NotificationUnreadNumberResponse> getUnreadNotificationNumber(HttpServletRequest request) {
+		Long userId = extractUserId(request);
+		return notificationService.getUnreadNotifcationNumber(userId);
+	}
+
+	@PostMapping("/send")
+	void sendNotifcationsTest() {
+		notificationService.sendNotificationTest();
 	}
 }

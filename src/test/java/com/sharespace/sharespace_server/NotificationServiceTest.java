@@ -70,7 +70,7 @@ class NotificationServiceTest {
         }
 
         // 테스트용 스레드 풀 초기화
-        executorService = Executors.newFixedThreadPool(100);
+        executorService = Executors.newFixedThreadPool(40);
     }
 
     @Test

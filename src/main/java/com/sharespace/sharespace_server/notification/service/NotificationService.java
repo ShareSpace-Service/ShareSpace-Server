@@ -20,7 +20,7 @@ import com.sharespace.sharespace_server.global.exception.error.NotificationExcep
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
-import com.sharespace.sharespace_server.notification.dto.response.NotificationResponse;
+import com.sharespace.sharespace_server.notification.dto.response.NotificationUnreadNumberResponse;
 import com.sharespace.sharespace_server.user.entity.User;
 
 import org.springframework.data.domain.Page;
@@ -194,4 +194,32 @@ public class NotificationService {
 		notificationRepository.deleteById(notificationId);
 		return baseResponseService.getSuccessResponse();
 	}
+
+	@Transactional
+	public BaseResponse<Void> readAllNotifications(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		List<Notification> notifications = notificationRepository.findAllByUser(user);
+		for (Notification notification : notifications) {
+			notification.setRead(true);
+		}
+		return baseResponseService.getSuccessResponse();
+	}
+
+	public void sendNotificationTest() {
+		Long userId = 1L;
+		sendNotification(userId, "테스트 알림입니다.");
+	}
+
+	public BaseResponse<NotificationUnreadNumberResponse> getUnreadNotifcationNumber(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		int unreadNotificationsCount = notificationRepository.findUnreadNotificationsCountByUser(user);
+
+		return baseResponseService.getSuccessResponse(
+			NotificationUnreadNumberResponse.builder()
+				.unreadNotificationNum(unreadNotificationsCount)
+				.build());
+	}
 }
+
