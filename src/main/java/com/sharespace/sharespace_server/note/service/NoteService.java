@@ -131,6 +131,20 @@ public class NoteService {
 	}
 
 	/**
+	 * 쪽지 읽음 처리
+	 *
+	 * @param noteId 조회하고자 하는 쪽지 고유 ID
+	 * @return 성공 여부 반환
+	 * @Author thereisname
+	 */
+	@Transactional
+	public BaseResponse<Void> markNoteAsRead(Long noteId) {
+		Note note = findNoteById(noteId);
+		note.setRead(true);
+		return baseResponseService.getSuccessResponse();
+	}
+
+	/**
 	 * 로그인 사용자가 쪽지를 보낼 수 있는 발신자 리스트 조회
 	 * <p>
 	 *     사용자의 역할(Role)에 따라 매칭된 사용자 리스트를 조회하여, 쪽지를 보낼 수 있는 발신자 리스트를 반환
