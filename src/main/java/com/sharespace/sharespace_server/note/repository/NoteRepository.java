@@ -3,6 +3,7 @@ package com.sharespace.sharespace_server.note.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.sharespace.sharespace_server.note.entity.Note;
@@ -10,4 +11,7 @@ import com.sharespace.sharespace_server.note.entity.Note;
 @Repository
 public interface NoteRepository extends JpaRepository<Note, Long> {
 	List<Note> findAllByReceiverId(Long userId);
+
+	@Query("SELECT COUNT(*) FROM Note n Where n.isRead = false AND n.receiver.id = :userId")
+	int findCountUnreadNotesByReceiverId(Long userId);
 }

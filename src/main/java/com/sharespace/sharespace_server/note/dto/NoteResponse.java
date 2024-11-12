@@ -16,6 +16,7 @@ public class NoteResponse {
 	private String title;
 	private String content;
 	private String sender;
+	private boolean isRead;
 
 	public static NoteResponse toNoteResponse(Note note) {
 		return NoteResponse.builder()
@@ -23,6 +24,7 @@ public class NoteResponse {
 			.title(note.getTitle())
 			.content(note.getContent())
 			.sender(note.getSender().getNickName())
+			.isRead(note.isRead())
 			.build();
 	}
 }
