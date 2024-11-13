@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.place.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class PlaceService {
+	private final int MAX_DISTANCE = 5000;
 	final BaseResponseService baseResponseService;
 	private final UserRepository userRepository;
 	private final PlaceRepository placeRepository;
@@ -46,7 +48,9 @@ public class PlaceService {
 	 * <p>모든 장소 리스트를 불러와 게스트 사용자 정보를 포함한 PlacesResponse 리스트로 반환합니다.</p>
 	 *
 	 * <p>이 메서드는 데이터베이스에서 모든 장소 정보를 조회하고, 각 장소에 대해 게스트 사용자와 호스트 간의 거리를 계산하여
-	 * PlacesResponse 객체로 변환합니다.</p>
+	 * 가까운 거리 순으로 PlacesResponse 객체로 변환합니다.
+	 * place image의 경우 여러 사진 중 랜덤으로 한 장의 사진만 반환합니다.
+	 * </p>
 	 *
 	 * @param userId 현재 로그인한 사용자 Id
 	 * @return 모든 장소 정보를 담은 PlacesResponse 리스트를 성공 응답 형태로 반환합니다.
@@ -58,6 +62,8 @@ public class PlaceService {
 
 		List<PlacesResponse> placesResponseList = placeRepository.findAll().stream()
 			.map(place -> PlacesResponse.from(place, guest))
+			.filter(response -> response.getDistance() <= MAX_DISTANCE)
+			.sorted(Comparator.comparingInt(PlacesResponse::getDistance))
 			.collect(Collectors.toList());
 
 		return baseResponseService.getSuccessResponse(placesResponseList);
@@ -68,11 +74,12 @@ public class PlaceService {
 	 *
 	 * <p>이 메서드는 주어진 매칭 ID를 통해 해당 매칭과 연결된 상품을 조회하고, 상품의 카테고리를 기준으로
 	 * 동일하거나 더 높은 카테고리와 product의 최대보관일수를 비교하여 초과되지 않은 장소를 필터링한다.
+	 * 사용자가 가까운 거리 순으로 정렬하여 반환하며, 사용자와의 거리가 최대 MAX_DISTANCE 내에 존재하는 place만 반환합니다.
 	 * 필터링된 장소들은 게스트 사용자의 정보를 포함하여 PlacesResponse 객체 리스트로 반환한다.</p>
 	 *
 	 * @param matchingId 매칭 ID (Long 타입)
 	 * @param userId 현재 로그인한 사용자 ID
-	 * @return 상품 카테고리에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트로 반환
+	 * @return 상품 카테고리와 최대 보관일 수에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트로 반환
 	 * @Author thereisname
 	 */
 	@Transactional
@@ -85,6 +92,8 @@ public class PlaceService {
 			.stream()
 			.filter(place -> matching.getProduct().getCategory().getValue() <= place.getCategory().getValue())
 			.map(place -> PlacesResponse.from(place, user))
+			.filter(response -> response.getDistance() <= MAX_DISTANCE)
+			.sorted(Comparator.comparingInt(PlacesResponse::getDistance))
 			.collect(Collectors.toList());
 
 		return baseResponseService.getSuccessResponse(places);
