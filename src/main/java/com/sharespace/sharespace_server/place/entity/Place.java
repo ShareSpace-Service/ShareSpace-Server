@@ -65,7 +65,7 @@ public class Place {
 		this.imageUrl = imageUrl;
 	}
 
-	public static Place from(PlaceRequest placeRequest, User user, List<String> combinedImageUrls) {
+	public static Place of(PlaceRequest placeRequest, User user, List<String> combinedImageUrls) {
 		return Place.builder()
 			.user(user)
 			.title(placeRequest.getTitle())
