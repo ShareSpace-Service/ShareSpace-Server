@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import com.sharespace.sharespace_server.global.enums.NotificationMessage;
 import com.sharespace.sharespace_server.global.enums.Role;
-import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.NoteException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
@@ -60,9 +59,7 @@ public class NoteService {
 	 */
 	@Transactional
 	public BaseResponse<List<NoteResponse>> getAllNotes(Long userId) {
-		User user = findUserById(userId);
-
-		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(user.getId()).stream()
+		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(userId).stream()
 			.map(NoteResponse::toNoteResponse)
 			.collect(Collectors.toList());
 
@@ -226,7 +223,7 @@ public class NoteService {
 
 	// task: 호스트 사용자가 발신할 수 있는 게스트 사용자 리스트 반환
 	private List<NoteSenderListResponse> getHostUserMatchingGuests(Long hostId) {
-		return matchingRepository.findAllByPlaceUserIdAndStatusIn(hostId, List.of(Status.PENDING, Status.STORED))
+		return matchingRepository.findAllByPlaceUserIdAndStatusIn(hostId)
 			.stream()
 			.map(matching -> matching.getProduct().getUser())
 			.distinct()
@@ -236,7 +233,7 @@ public class NoteService {
 
 	// task: 게스트 사용자가 발신할 수 있는 호스트 사용자 리스트 반환
 	private List<NoteSenderListResponse> getGuestUserMatchingHosts(Long guestId) {
-		return matchingRepository.findAllByProductUserIdAndStatusIn(guestId, List.of(Status.PENDING, Status.STORED))
+		return matchingRepository.findAllByProductUserIdAndStatusIn(guestId)
 			.stream()
 			.map(matching -> matching.getPlace().getUser())
 			.distinct()

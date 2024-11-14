@@ -19,15 +19,15 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductRegisterRequest {
-    @NotNull
+    @NotNull(message = "제목을 필수로 입력해주세요")
     @NotEmpty
     private String title;
-    @NotNull
+    @NotNull(message = "카테고리를 필수로 입력해주세요")
     private Category category;
-    @NotNull
+    @NotNull(message = "기간을 필수로 입력해주세요")
     @Min(1)
     private Integer period;
-    @NotNull
+    @NotNull(message = "사진을 필수로 입력해주세요")
     @NotEmpty
     private List<MultipartFile> imageUrl;
     private String description;

@@ -1,4 +1,4 @@
-package com.sharespace.sharespace_server.place.dto;
+package com.sharespace.sharespace_server.place.dto.response;
 
 import java.util.List;
 

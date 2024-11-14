@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
-import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
-import com.sharespace.sharespace_server.place.dto.PlaceEditResponse;
-import com.sharespace.sharespace_server.place.dto.PlaceRequest;
-import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
-import com.sharespace.sharespace_server.place.dto.PlacesResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceDetailResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceEditResponse;
+import com.sharespace.sharespace_server.place.dto.request.PlaceRequest;
+import com.sharespace.sharespace_server.place.dto.request.PlaceUpdateRequest;
+import com.sharespace.sharespace_server.place.dto.response.PlacesResponse;
 import com.sharespace.sharespace_server.place.service.PlaceService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,6 +63,7 @@ public class PlaceController {
 		return placeService.createPlace(placeRequest, userId);
 	}
 
+	// task: 장소 수정 전 기존 장소 디테일 조회
 	@GetMapping("/edit")
 	@CheckPermission(roles = "ROLE_HOST")
 	public BaseResponse<PlaceEditResponse> getUserPlaceForUpdate(HttpServletRequest httpRequest) {

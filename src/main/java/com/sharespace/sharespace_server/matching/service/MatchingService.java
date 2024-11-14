@@ -29,7 +29,7 @@ import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.place.dto.MatchingPlaceDto;
-import com.sharespace.sharespace_server.place.dto.PlaceRequestedDetailResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceRequestedDetailResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
 import com.sharespace.sharespace_server.product.dto.MatchingProductDto;

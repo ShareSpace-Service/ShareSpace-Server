@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.place.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,11 +18,11 @@ import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
-import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
-import com.sharespace.sharespace_server.place.dto.PlaceEditResponse;
-import com.sharespace.sharespace_server.place.dto.PlaceRequest;
-import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
-import com.sharespace.sharespace_server.place.dto.PlacesResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceDetailResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceEditResponse;
+import com.sharespace.sharespace_server.place.dto.request.PlaceRequest;
+import com.sharespace.sharespace_server.place.dto.request.PlaceUpdateRequest;
+import com.sharespace.sharespace_server.place.dto.response.PlacesResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
 import com.sharespace.sharespace_server.user.entity.User;
@@ -35,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class PlaceService {
+	private final int MAX_DISTANCE = 5000;
 	final BaseResponseService baseResponseService;
 	private final UserRepository userRepository;
 	private final PlaceRepository placeRepository;
@@ -46,7 +48,9 @@ public class PlaceService {
 	 * <p>모든 장소 리스트를 불러와 게스트 사용자 정보를 포함한 PlacesResponse 리스트로 반환합니다.</p>
 	 *
 	 * <p>이 메서드는 데이터베이스에서 모든 장소 정보를 조회하고, 각 장소에 대해 게스트 사용자와 호스트 간의 거리를 계산하여
-	 * PlacesResponse 객체로 변환합니다.</p>
+	 * 가까운 거리 순으로 PlacesResponse 객체로 변환합니다.
+	 * place image의 경우 여러 사진 중 랜덤으로 한 장의 사진만 반환합니다.
+	 * </p>
 	 *
 	 * @param userId 현재 로그인한 사용자 Id
 	 * @return 모든 장소 정보를 담은 PlacesResponse 리스트를 성공 응답 형태로 반환합니다.
@@ -58,6 +62,8 @@ public class PlaceService {
 
 		List<PlacesResponse> placesResponseList = placeRepository.findAll().stream()
 			.map(place -> PlacesResponse.from(place, guest))
+			.filter(response -> response.getDistance() <= MAX_DISTANCE)
+			.sorted(Comparator.comparingInt(PlacesResponse::getDistance))
 			.collect(Collectors.toList());
 
 		return baseResponseService.getSuccessResponse(placesResponseList);
@@ -68,11 +74,12 @@ public class PlaceService {
 	 *
 	 * <p>이 메서드는 주어진 매칭 ID를 통해 해당 매칭과 연결된 상품을 조회하고, 상품의 카테고리를 기준으로
 	 * 동일하거나 더 높은 카테고리와 product의 최대보관일수를 비교하여 초과되지 않은 장소를 필터링한다.
+	 * 사용자가 가까운 거리 순으로 정렬하여 반환하며, 사용자와의 거리가 최대 MAX_DISTANCE 내에 존재하는 place만 반환합니다.
 	 * 필터링된 장소들은 게스트 사용자의 정보를 포함하여 PlacesResponse 객체 리스트로 반환한다.</p>
 	 *
 	 * @param matchingId 매칭 ID (Long 타입)
 	 * @param userId 현재 로그인한 사용자 ID
-	 * @return 상품 카테고리에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트로 반환
+	 * @return 상품 카테고리와 최대 보관일 수에 맞는 장소 리스트를 담은 PlacesResponse 객체 리스트로 반환
 	 * @Author thereisname
 	 */
 	@Transactional
@@ -85,6 +92,8 @@ public class PlaceService {
 			.stream()
 			.filter(place -> matching.getProduct().getCategory().getValue() <= place.getCategory().getValue())
 			.map(place -> PlacesResponse.from(place, user))
+			.filter(response -> response.getDistance() <= MAX_DISTANCE)
+			.sorted(Comparator.comparingInt(PlacesResponse::getDistance))
 			.collect(Collectors.toList());
 
 		return baseResponseService.getSuccessResponse(places);
@@ -124,13 +133,14 @@ public class PlaceService {
 
 		validatePlaceDoesNotExist(user.getId());
 
+		// NOTE: 책임 분리를 좀 하고 싶은데. dto 에서 책임 분리 하는 것은 별로인가?
 		if (!s3ImageUpload.hasValidImages(placeRequest.getImageUrl())) {
 			throw new CustomRuntimeException(ImageException.IMAGE_REQUIRED_FIELDS_EMPTY);
 		};
 
 		List<String> combinedImageUrls = s3ImageUpload.uploadImages(placeRequest.getImageUrl(), "place/" +user.getId());
 
-		Place place = Place.from(placeRequest, user, combinedImageUrls);
+		Place place = Place.of(placeRequest, user, combinedImageUrls);
 		placeRepository.save(place);
 
 		return baseResponseService.getSuccessResponse("장소가 성공적으로 등록되었습니다.");
@@ -183,26 +193,31 @@ public class PlaceService {
 		return baseResponseService.getSuccessResponse(placeEditResponse);
 	}
 
+	// task: 사용자가 존재하는지 검증하고 사용자 객체 반환
 	private User findByUser(Long userId) {
 		return userRepository.findById(userId)
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 	}
 
+	// task: 매칭 여부를 확인하고 존재한다면 매칭 객체 반환
 	private Matching findMatchingById(Long matchingId) {
 		return matchingRepository.findById(matchingId)
 			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
 	}
 
+	// task: 장소가 존재하는지 확인인하고 존재할 경우 장소 해당 장소 반환
 	private Place findPlaceById(Long placeId) {
 		return placeRepository.findById(placeId)
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 	}
 
+	// task: 사용자가 등록한 장소가 존재하는지 확인하고 존재할 경우 해당 장소 반환
 	private Place findPlaceByUserId(Long userId) {
 		return placeRepository.findByUserId(userId)
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 	}
 
+	// task: 사용자가 이미 장소를 등록 여부 검증
 	private void validatePlaceDoesNotExist(Long userId) {
 		placeRepository.findByUserId(userId).ifPresent(p -> {
 			throw new CustomRuntimeException(PlaceException.PLACE_ALREADY_EXISTS);
