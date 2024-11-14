@@ -60,9 +60,7 @@ public class NoteService {
 	 */
 	@Transactional
 	public BaseResponse<List<NoteResponse>> getAllNotes(Long userId) {
-		User user = findUserById(userId);
-
-		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(user.getId()).stream()
+		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(userId).stream()
 			.map(NoteResponse::toNoteResponse)
 			.collect(Collectors.toList());
 
