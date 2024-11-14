@@ -63,6 +63,7 @@ public class PlaceController {
 		return placeService.createPlace(placeRequest, userId);
 	}
 
+	// task: 장소 수정 전 기존 장소 디테일 조회
 	@GetMapping("/edit")
 	@CheckPermission(roles = "ROLE_HOST")
 	public BaseResponse<PlaceEditResponse> getUserPlaceForUpdate(HttpServletRequest httpRequest) {
