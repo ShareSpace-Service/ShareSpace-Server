@@ -13,8 +13,6 @@ import com.sharespace.sharespace_server.matching.entity.Matching;
 
 @Repository
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
-	List<Matching> findAllByPlaceUserIdAndStatusIn(Long id, List<Status> pending);
-	List<Matching> findAllByProductUserIdAndStatusIn(Long id, List<Status> pending);
 	List<Matching> findAllByProductIdInAndPlaceId(List<Long> productIds, Long placeId);
 	Optional<Matching> findByProductIdAndPlaceId(Long productId, Long placeId);
 	List<Matching> findAllByStatus(Status status);
@@ -74,5 +72,15 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 		+ "AND p.user.id = :userId")
 	List<Matching> findMatchingsWithProductByStatus(Long userId);
 
+	@Query("SELECT m FROM Matching m "
+		+ "JOIN FETCH m.place p "
+		+ "WHERE (m.status = 'PENDING' OR m.status = 'STORED') "
+		+ "AND p.user.id = :userId")
+	List<Matching> findAllByPlaceUserIdAndStatusIn(Long userId);
 
+	@Query("SELECT m FROM Matching m "
+		+ "JOIN FETCH m.product p "
+		+ "WHERE (m.status = 'PENDING' OR m.status = 'STORED') "
+		+ "AND p.user.id = :userId")
+	List<Matching> findAllByProductUserIdAndStatusIn(Long userId);
 }
