@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Objects;
 
 import com.sharespace.sharespace_server.global.enums.Category;
-import com.sharespace.sharespace_server.place.dto.PlaceRequest;
-import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
+import com.sharespace.sharespace_server.place.dto.request.PlaceRequest;
+import com.sharespace.sharespace_server.place.dto.request.PlaceUpdateRequest;
 import com.sharespace.sharespace_server.user.entity.User;
 
 import jakarta.persistence.Column;

@@ -18,11 +18,11 @@ import com.sharespace.sharespace_server.global.utils.LocationTransform;
 import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
-import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
-import com.sharespace.sharespace_server.place.dto.PlaceEditResponse;
-import com.sharespace.sharespace_server.place.dto.PlaceRequest;
-import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
-import com.sharespace.sharespace_server.place.dto.PlacesResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceDetailResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceEditResponse;
+import com.sharespace.sharespace_server.place.dto.request.PlaceRequest;
+import com.sharespace.sharespace_server.place.dto.request.PlaceUpdateRequest;
+import com.sharespace.sharespace_server.place.dto.response.PlacesResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
 import com.sharespace.sharespace_server.user.entity.User;
@@ -133,13 +133,14 @@ public class PlaceService {
 
 		validatePlaceDoesNotExist(user.getId());
 
+		// NOTE: 책임 분리를 좀 하고 싶은데. dto 에서 책임 분리 하는 것은 별로인가?
 		if (!s3ImageUpload.hasValidImages(placeRequest.getImageUrl())) {
 			throw new CustomRuntimeException(ImageException.IMAGE_REQUIRED_FIELDS_EMPTY);
 		};
 
 		List<String> combinedImageUrls = s3ImageUpload.uploadImages(placeRequest.getImageUrl(), "place/" +user.getId());
 
-		Place place = Place.from(placeRequest, user, combinedImageUrls);
+		Place place = Place.of(placeRequest, user, combinedImageUrls);
 		placeRepository.save(place);
 
 		return baseResponseService.getSuccessResponse("장소가 성공적으로 등록되었습니다.");
@@ -192,26 +193,31 @@ public class PlaceService {
 		return baseResponseService.getSuccessResponse(placeEditResponse);
 	}
 
+	// task: 사용자가 존재하는지 검증하고 사용자 객체 반환
 	private User findByUser(Long userId) {
 		return userRepository.findById(userId)
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 	}
 
+	// task: 매칭 여부를 확인하고 존재한다면 매칭 객체 반환
 	private Matching findMatchingById(Long matchingId) {
 		return matchingRepository.findById(matchingId)
 			.orElseThrow(() -> new CustomRuntimeException(MatchingException.MATCHING_NOT_FOUND));
 	}
 
+	// task: 장소가 존재하는지 확인인하고 존재할 경우 장소 해당 장소 반환
 	private Place findPlaceById(Long placeId) {
 		return placeRepository.findById(placeId)
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 	}
 
+	// task: 사용자가 등록한 장소가 존재하는지 확인하고 존재할 경우 해당 장소 반환
 	private Place findPlaceByUserId(Long userId) {
 		return placeRepository.findByUserId(userId)
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 	}
 
+	// task: 사용자가 이미 장소를 등록 여부 검증
 	private void validatePlaceDoesNotExist(Long userId) {
 		placeRepository.findByUserId(userId).ifPresent(p -> {
 			throw new CustomRuntimeException(PlaceException.PLACE_ALREADY_EXISTS);
