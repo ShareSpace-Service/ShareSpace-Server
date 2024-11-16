@@ -63,7 +63,7 @@ public class NotificationService {
 		Set<SseEmitter> userEmitterSet = userEmitters.computeIfAbsent(userId, 
 			k -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 		userEmitterSet.add(emitter);
-		
+
 		// 연결 직후 첫 메시지 전송
 		sendInitialMessage(emitter);
 		
@@ -113,6 +113,9 @@ public class NotificationService {
 					scheduler.shutdown();
 				}
 			} catch (IOException e) {
+				if (e.getMessage().contains("Broken pipe")) {
+					log.warn("SSE 연결이 끊어짐, 이 에러는 무시됩니다.", e);
+				}
 				removeEmitter(userId, emitter);
 				scheduler.shutdown();
 				log.error("하트비트 전송 실패: {}", e.getMessage());
@@ -133,13 +136,14 @@ public class NotificationService {
                 .orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
 		if (userEmitterSet != null) {
+			Notification notification = create(user, message);
+			notificationRepository.save(notification);
 			userEmitterSet.forEach(emitter -> {
 				try {
 					emitter.send(SseEmitter.event()
 						.name("NOTIFICATION")
 						.data(message));
-					Notification notification = create(user, message);
-					notificationRepository.save(notification);
+
 				} catch (IOException e) {
 					deadEmitters.add(emitter);
 					log.error("알림 전송 실패: {}", e.getMessage());
@@ -221,5 +225,14 @@ public class NotificationService {
 				.unreadNotificationNum(unreadNotificationsCount)
 				.build());
 	}
-}
+
+	// 알림 모두 지우기
+	@Transactional
+	public BaseResponse<Void> deleteAllNotifications(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		notificationRepository.deleteAllByUser(user);
+		return baseResponseService.getSuccessResponse();
+	}
+	}
 
