@@ -25,4 +25,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
         + " where n.isRead = false"
         + " and n.user = :user")
     int findUnreadNotificationsCountByUser(User user);
+
+    void deleteAllByUser(User user);
 }

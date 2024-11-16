@@ -62,8 +62,17 @@ public class NotificationController {
 		return notificationService.getUnreadNotifcationNumber(userId);
 	}
 
+	@DeleteMapping("/all")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
+	BaseResponse<Void> deleteAllNotifications(HttpServletRequest request) {
+		Long userId = extractUserId(request);
+		return notificationService.deleteAllNotifications(userId);
+	}
+
+
 	@PostMapping("/send")
 	void sendNotifcationsTest() {
 		notificationService.sendNotificationTest();
 	}
+
 }
