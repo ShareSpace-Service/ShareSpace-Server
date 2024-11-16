@@ -280,11 +280,15 @@ public class MatchingService {
 	 */
 	@Transactional
 	public BaseResponse<Void> guestConfirmStorage(MatchingGuestConfirmStorageRequest request) {
+		// FIXME : Fetch Join 쓰기
 		Matching matching = findMatching(request.getMatchingId());
 
 		matching.confirmStorageByGuest();
 
 		matchingRepository.save(matching);
+		
+		// 요청 수락하면 Host에게 알림 전송
+		notificationService.sendNotification(matching.getPlace().getUser().getId(), GUEST_COMPLETED_KEEPING.getMessage());
 		// TODO : IMAGE가 Null일 때 예외처리?
 		return baseResponseService.getSuccessResponse();
 	}
