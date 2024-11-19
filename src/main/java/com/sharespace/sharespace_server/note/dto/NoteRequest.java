@@ -3,6 +3,7 @@ package com.sharespace.sharespace_server.note.dto;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +19,7 @@ public class NoteRequest {
 	private Long receiverId;
 	@NotEmpty
 	@NotNull(message = "제목을 입력해주세요")
+	@Size(max = 50, message = "제목은 50자 이내로 작성해주세요")
 	private String title;
 	@NotEmpty
 	@NotNull(message = "내용을 입력해주세요")
