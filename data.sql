@@ -53,14 +53,15 @@ CREATE TABLE product (
 
 CREATE TABLE note (
     id BIGINT NOT NULL AUTO_INCREMENT,
-    id1 BIGINT NOT NULL,
-    id2 BIGINT NOT NULL,
+    sender BIGINT NOT NULL,
+    receiver BIGINT NOT NULL,
     title VARCHAR(50) NOT NULL,
     content TEXT NOT NULL,
     send_at DATETIME NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
-    FOREIGN KEY (id1) REFERENCES user (id),
-    FOREIGN KEY (id2) REFERENCES user (id)
+    FOREIGN KEY (sender) REFERENCES user (id),
+    FOREIGN KEY (receiver) REFERENCES user (id)
 );
 
 CREATE TABLE notification (
