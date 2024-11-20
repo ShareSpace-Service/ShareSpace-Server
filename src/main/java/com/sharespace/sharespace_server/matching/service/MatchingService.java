@@ -311,12 +311,6 @@ public class MatchingService {
 		User user = findUser(userId);
 		Matching matching = findMatching(matchingId);
 
-		// Matching 객체에게 취소 처리 위임
-		matching.cancel(user);
-
-		matchingRepository.save(matching);
-		
-		
 		// 알림 전송 로직
 		// 1. 요청 취소 주체 찾기 => userId
 			/* 1-1. 요청 취소의 주체가 Place의 owner, 즉, Host일 경우
@@ -330,6 +324,10 @@ public class MatchingService {
 			 */
 			notificationService.sendNotification(matching.getPlace().getUser().getId(), CANCELED_MATCHING.getMessage());
 		}
+		// Matching 객체에게 취소 처리 위임
+		matching.cancel(user);
+
+		matchingRepository.save(matching);
 		return baseResponseService.getSuccessResponse();
 	}
 
