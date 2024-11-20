@@ -26,13 +26,13 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 	@Query("SELECT m "
 		+ "from Matching m "
 		+ "JOIN FETCH m.product p "
-		+ "where p.user.id = :userId")
+		+ "where p.user.id = :userId and not m.status='COMPLETED'")
 	List<Matching> findMatchingWithProductByUserId(Long userId);
 
 	@Query("SELECT m "
 		+ "from Matching m "
 		+ "JOIN FETCH m.place p "
-		+ "where p.user.id = :userId ")
+		+ "where p.user.id = :userId  and not m.status='COMPLETED'")
 	List<Matching> findMatchingWithPlaceByUserId(Long userId);
 
 	// Matching + Product 찾기 By Status
