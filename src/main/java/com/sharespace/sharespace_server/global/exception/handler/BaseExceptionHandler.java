@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.global.exception.handler;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -31,5 +32,14 @@ public class BaseExceptionHandler {
             .status(HttpStatus.BAD_REQUEST)
             .body(BaseResponse.error(defaultMessage, HttpStatus.BAD_REQUEST));
     }
+
+    @ExceptionHandler(IOException.class)
+    public void handleIOExceptions(IOException e) {
+        if (e.getMessage().contains("Broken pipe")) {
+            // Broken pipe 로그를 줄이기 위해 무시하거나 최소한의 로깅
+            System.out.println("Broken pipe 예외 발생: 클라이언트 연결 종료");
+        }
+    }
+
 
 }
