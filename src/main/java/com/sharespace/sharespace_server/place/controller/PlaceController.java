@@ -58,7 +58,7 @@ public class PlaceController {
 	// task: 장소 등록
 	@PostMapping
 	@CheckPermission(roles = "ROLE_HOST")
-	public BaseResponse<String> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest,  HttpServletRequest httpRequest) {
+	public BaseResponse<Void> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest,  HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return placeService.createPlace(placeRequest, userId);
 	}
@@ -74,7 +74,7 @@ public class PlaceController {
 	// task: 장소 수정
 	@PutMapping
 	@CheckPermission(roles = "ROLE_HOST")
-	public BaseResponse<String> updatePlace(@Valid @ModelAttribute PlaceUpdateRequest placeRequest, HttpServletRequest httpRequest) {
+	public BaseResponse<Void> updatePlace(@Valid @ModelAttribute PlaceUpdateRequest placeRequest, HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return placeService.updatePlace(placeRequest, userId);
 	}

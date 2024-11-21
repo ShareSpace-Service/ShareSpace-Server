@@ -79,7 +79,7 @@ public class NoteService {
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> createNote(NoteRequest noteRequest, Long userId) {
+	public BaseResponse<Void> createNote(NoteRequest noteRequest, Long userId) {
 		User sender = findUserById(userId);
 		User receiver = findUserById(noteRequest.getReceiverId());
 
@@ -90,7 +90,7 @@ public class NoteService {
 
 		// Receiver에게 알림 전송
 		notificationService.sendNotification(receiver.getId(), NotificationMessage.RECEIVED_NOTE.format(sender.getNickName()));
-		return baseResponseService.getSuccessResponse("쪽지 보내기 성공!");
+		return baseResponseService.getSuccessResponse();
 	}
 
 	/**
@@ -105,11 +105,11 @@ public class NoteService {
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> deleteNote(Long noteId) {
+	public BaseResponse<Void> deleteNote(Long noteId) {
 		Note note = findNoteById(noteId);
 		noteRepository.delete(note);
 
-		return baseResponseService.getSuccessResponse("쪽지 삭제 성공");
+		return baseResponseService.getSuccessResponse();
 	}
 
 	/**

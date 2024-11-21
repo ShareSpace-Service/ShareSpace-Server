@@ -128,7 +128,7 @@ public class PlaceService {
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> createPlace(PlaceRequest placeRequest, Long userId) {
+	public BaseResponse<Void> createPlace(PlaceRequest placeRequest, Long userId) {
 		User user = findByUser(userId);
 
 		validatePlaceDoesNotExist(user.getId());
@@ -143,7 +143,7 @@ public class PlaceService {
 		Place place = Place.of(placeRequest, user, combinedImageUrls);
 		placeRepository.save(place);
 
-		return baseResponseService.getSuccessResponse("장소가 성공적으로 등록되었습니다.");
+		return baseResponseService.getSuccessResponse();
 	}
 
 	/**
@@ -160,7 +160,7 @@ public class PlaceService {
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> updatePlace(PlaceUpdateRequest placeRequest, Long userId) {
+	public BaseResponse<Void> updatePlace(PlaceUpdateRequest placeRequest, Long userId) {
 		User user = findByUser(userId);
 
 		Place place = findPlaceByUserId(user.getId());
@@ -172,7 +172,7 @@ public class PlaceService {
 		updateUserLocationIfChanged(user, placeRequest);
 		place.updateFields(placeRequest, updatedImages);
 
-		return baseResponseService.getSuccessResponse("장소 수정 성공!");
+		return baseResponseService.getSuccessResponse();
 	}
 
 	/**
