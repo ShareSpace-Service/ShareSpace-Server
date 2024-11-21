@@ -45,7 +45,7 @@ public class NoteController {
 	// task: 쪽지 전송
 	@PostMapping
 	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
-	public  BaseResponse<String> createNote(@Valid @RequestBody NoteRequest noteRequest, HttpServletRequest httpRequest) {
+	public  BaseResponse<Void> createNote(@Valid @RequestBody NoteRequest noteRequest, HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return noteService.createNote(noteRequest, userId);
 	}
@@ -53,7 +53,7 @@ public class NoteController {
 	// task: 쪽지 삭제
 	@DeleteMapping
 	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
-	public BaseResponse<String> deleteNote(@RequestParam Long noteId) {
+	public BaseResponse<Void> deleteNote(@RequestParam Long noteId) {
 		return noteService.deleteNote(noteId);
 	}
 
