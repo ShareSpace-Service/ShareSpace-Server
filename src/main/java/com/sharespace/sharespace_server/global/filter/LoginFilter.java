@@ -147,7 +147,17 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
         cookie.setPath("/");
-        cookie.setMaxAge(maxAge); // 2시간
+        cookie.setMaxAge(maxAge);
         response.addCookie(cookie);
+
+        String cookieHeader = String.format(
+                "%s=%s; Max-Age=%d; Path=%s; Secure; HttpOnly; SameSite=Strict",
+                cookieName,
+                jwtToken,
+                maxAge,
+                "/"
+        );
+
+        response.addHeader("Set-Cookie", cookieHeader);
     }
 }
