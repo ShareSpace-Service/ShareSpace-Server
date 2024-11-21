@@ -130,17 +130,12 @@ public class Matching {
 		if (!this.getStatus().equals(Status.PENDING)) {
 			throw new CustomRuntimeException(MatchingException.REQUEST_CANCELLATION_NOT_ALLOWED);
 		}
-
 		// 물품 배정 상태 변경
-		this.product.unassign();
-		this.setStatus(UNASSIGNED);
-		this.setPlace(null);
-		// 유저 역할에 따른 상태 변경
-		// if (user.getRole().getValue().equals("GUEST")) {
-		// 	this.setStatus(UNASSIGNED);  // GUEST가 취소할 경우
-		// } else if (user.getRole().getValue().equals("HOST")) {
-		// 	this.setStatus(Status.REJECTED);  // HOST가 취소할 경우
-		// }
+		if (!this.status.equals(UNASSIGNED)) {
+			this.product.unassign();
+			this.setStatus(UNASSIGNED);
+			this.setPlace(null);
+		}
 	}
 
 	public void confirmStorageByGuest() {
