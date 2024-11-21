@@ -14,4 +14,6 @@ public class MatchingShowKeepDetailResponse {
 	private MatchingProductDto product;
 	private MatchingPlaceDto place;
 	private String imageUrl;
+	private boolean hostCompleted;
+	private boolean guestCompleted;
 }

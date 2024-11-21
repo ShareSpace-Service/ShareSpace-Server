@@ -169,6 +169,8 @@ public class MatchingService {
 			.product(matchingProductDto)
 			.place(matchingPlaceDto)
 			.imageUrl(matching.getImage())
+			.guestCompleted(matching.isGuestCompleted())
+			.hostCompleted(matching.isHostCompleted())
 			.build();
 
 		return baseResponseService.getSuccessResponse(response);
