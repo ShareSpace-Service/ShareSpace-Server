@@ -113,12 +113,8 @@ public class NotificationService {
 					scheduler.shutdown();
 				}
 			} catch (IOException e) {
-				if (e.getMessage().contains("Broken pipe")) {
-					log.warn("SSE 연결이 끊어짐, 이 에러는 무시됩니다.", e);
-				}
 				removeEmitter(userId, emitter);
 				scheduler.shutdown();
-				log.error("하트비트 전송 실패: {}", e.getMessage());
 			}
 		}, 0, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
 	}
