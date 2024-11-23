@@ -10,6 +10,7 @@ import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.jwt.entity.Token;
 import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
+import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
@@ -48,6 +49,7 @@ public class UserService {
     private final S3ImageUpload s3ImageUpload;
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenJpaRepository tokenJpaRepository;
+    private final NotificationService notificationService;
 
     // 유저 회원가입
     @Transactional
@@ -165,6 +167,9 @@ public class UserService {
 
         // 토큰을 찾지 못했을 경우 예외처리
         Token token = tokenJpaRepository.findByUserId(userId).orElseThrow(() -> new CustomRuntimeException(JwtException.REFRESH_TOKEN_NOT_FOUND_EXCEPTION));
+
+        //
+        notificationService.removeAllEmittersByUserId(userId);
 
         // 1. AccessToken 블랙리스트에 추가
         tokenBlacklistService.addToBlacklist(accessToken);
