@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import com.sharespace.sharespace_server.global.exception.error.NotificationException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
@@ -49,7 +46,6 @@ public class NotificationService {
 	private final NotificationRepository notificationRepository;
 	private final BaseResponseService baseResponseService;
 	private static final long TIMEOUT = 60 * 60 * 1000L; // 1시간
-	private static final long HEARTBEAT_INTERVAL = 30 * 1000L; // 30초
 
 	/**
 	 * SSE 구독 요청 처리
@@ -64,11 +60,11 @@ public class NotificationService {
 			k -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 		userEmitterSet.add(emitter);
 
+		// 연결시 deadEmitter 제거
+		cleanDeadEmitters(userId, userEmitterSet);
+		log.info("현재 userId = " + userId + " 연결된 SSE 개수 : " + userEmitterSet.size());
 		// 연결 직후 첫 메시지 전송
 		sendInitialMessage(emitter);
-		
-		// 하트비트 메시지 전송 스케줄링
-		scheduleHeartbeat(userId, emitter);
 		
 		// 연결 종료 시 처리
 		emitter.onCompletion(() -> removeEmitter(userId, emitter));
@@ -100,25 +96,6 @@ public class NotificationService {
 		}
 	}
 
-	private void scheduleHeartbeat(Long userId, SseEmitter emitter) {
-		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-		scheduler.scheduleAtFixedRate(() -> {
-			try {
-				Set<SseEmitter> userEmitterSet = userEmitters.get(userId);
-				if (userEmitterSet != null && userEmitterSet.contains(emitter)) {
-					emitter.send(SseEmitter.event()
-						.name("HEARTBEAT")
-						.data("❤️"));
-				} else {
-					scheduler.shutdown();
-				}
-			} catch (IOException e) {
-				removeEmitter(userId, emitter);
-				scheduler.shutdown();
-			}
-		}, 0, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
-	}
-
 	/**
 	 * 유저에게 알림을 보내는 메서드
 	 * @param userId 알림을 받을 유저 ID
@@ -137,12 +114,13 @@ public class NotificationService {
 			userEmitterSet.forEach(emitter -> {
 				try {
 					emitter.send(SseEmitter.event()
+						.id(userId.toString())
 						.name("NOTIFICATION")
 						.data(message));
 
 				} catch (IOException e) {
 					deadEmitters.add(emitter);
-					log.error("알림 전송 실패: {}", e.getMessage());
+					// log.error("Dead Emiiter는 제거됩니다. {}", e.getMessage());
 				}
 			});
 			
@@ -230,5 +208,39 @@ public class NotificationService {
 		notificationRepository.deleteAllByUser(user);
 		return baseResponseService.getSuccessResponse();
 	}
+
+	/**
+	 * Dead Emitter 제거 메서드
+	 * @param userId 유저 ID
+	 * @param emitters 유저의 SseEmitter Set
+	 */
+	private void cleanDeadEmitters(Long userId, Set<SseEmitter> emitters) {
+		for (SseEmitter emitter : emitters) {
+			try {
+				emitter.send(SseEmitter.event()
+					.name("HEARTBEAT_CHECK")
+					.data("Checking emitter health"));
+			} catch (IOException e) {
+				removeEmitter(userId, emitter);
+			}
+		}
 	}
+ 	// 로그아웃시 호출될 메서드
+	public void removeAllEmittersByUserId(Long userId) {
+		Set<SseEmitter> userEmitterSet = userEmitters.get(userId);
+		if (userEmitterSet != null) {
+			userEmitterSet.forEach(emitter -> {
+				try {
+					emitter.complete();
+				} catch (Exception e) {
+					log.error("Error while completing emitter for user {}: {}", userId, e.getMessage());
+				}
+			});
+			userEmitters.remove(userId);
+			log.info("Removed all SSE connections for user {}", userId);
+		}
+	}
+
+
+}
 
