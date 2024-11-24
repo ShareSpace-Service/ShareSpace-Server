@@ -479,9 +479,12 @@ public class MatchingService {
 
 		// expiryDate 3일 이내 필터링 및 정렬
 		List<Matching> filteredAndSortedMatchings = matchings.stream()
-				.filter(matching -> matching.getExpiryDate() != null &&
-						matching.getExpiryDate().toLocalDate().isAfter(currentDate) &&
-						matching.getExpiryDate().toLocalDate().isBefore(threeDaysAfter))
+				.filter(matching -> matching.getExpiryDate() != null)
+				.filter(matching -> {
+					LocalDate expiryDate = matching.getExpiryDate().toLocalDate(); // LocalDate로 변환
+					return (expiryDate.isEqual(currentDate) ||  // 당일 반납
+							(expiryDate.isAfter(currentDate) && expiryDate.isBefore(threeDaysAfter))); // 3일 이내
+				})
 				.sorted(Comparator.comparing(Matching::getExpiryDate)) // expiryDate 기준 오름차순 정렬
 				.collect(Collectors.toList());
 
