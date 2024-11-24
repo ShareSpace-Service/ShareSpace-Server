@@ -122,16 +122,13 @@ public class PlaceService {
 	 * 예외를 발생시킵니다. 또한, 이미지 업로드를 처리하며, 이미지가 없거나 유효하지 않을 경우에도 예외를 발생시킵니다.</p>
 	 *
 	 * @param placeRequest 장소 생성에 필요한 요청 데이터 (PlaceRequest 타입)
-	 * @param userId 현재 로그인한 사용자 Id
 	 * @return 성공적으로 생성된 장소에 대한 성공 메시지를 반환합니다.
 	 * @throws CustomRuntimeException 동일한 사용자 ID로 이미 장소가 등록경우, 이미지가 유효하지 않거나 누락된 경우 발생합니다.
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<Void> createPlace(PlaceRequest placeRequest, String email) {
-		// User user = findByUser(userId);
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+	public BaseResponse<Void> createPlace(PlaceRequest placeRequest) {
+		User user = findByEmail(placeRequest.getEmail());
 
 		validatePlaceDoesNotExist(user.getId());
 
@@ -195,9 +192,15 @@ public class PlaceService {
 		return baseResponseService.getSuccessResponse(placeEditResponse);
 	}
 
-	// task: 사용자가 존재하는지 검증하고 사용자 객체 반환
+	// task: 사용자 ID를 기준으로 사용자가 존재하는지 검증하고 사용자 객체 반환
 	private User findByUser(Long userId) {
 		return userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+	}
+
+	// task: 이메일을 기준으로 사용자가 존재하는지 검증하고 사용자 객체 반환
+	private User findByEmail(String email) {
+		return userRepository.findByEmail(email)
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 	}
 

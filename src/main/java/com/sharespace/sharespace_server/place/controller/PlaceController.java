@@ -1,6 +1,5 @@
 package com.sharespace.sharespace_server.place.controller;
 
-import java.security.Principal;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -58,10 +57,8 @@ public class PlaceController {
 
 	// task: 장소 등록
 	@PostMapping("/register")
-	@CheckPermission(roles = "ROLE_HOST")
-	public BaseResponse<Void> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest, Principal principal) {
-		String email = principal.getName();
-		return placeService.createPlace(placeRequest, email);
+	public BaseResponse<Void> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest) {
+		return placeService.createPlace(placeRequest);
 	}
 
 	// task: 장소 수정 전 기존 장소 디테일 조회
