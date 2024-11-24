@@ -53,6 +53,9 @@ public class MailConfig {
         mailSender.setUsername(username);
         mailSender.setPassword(password);
 
+        System.out.println("MAIL_USER_NAME : " + username);
+        System.out.println("MAIL_SMTP_PASSWORD: " + password);
+
         Properties mailProperties = mailSender.getJavaMailProperties();
         mailProperties.put("mail.smtp.auth", auth);
         mailProperties.put("mail.smtp.ssl.enable", sslEnable);
