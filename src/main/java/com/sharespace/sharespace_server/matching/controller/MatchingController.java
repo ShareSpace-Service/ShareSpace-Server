@@ -132,12 +132,11 @@ public class MatchingController {
 		return matchingService.getDashboardCount(userId);
 	}
 
-//	@GetMapping("/dashboard/upcome")
-//	@CheckPermission(roles = "ROLE_HOST")
-//	public BaseResponse<List<MatchingDashboardUpcomeResponse>> getDashboardCount(HttpServletRequest request) {
-//		Long userId = extractUserId(request);
-//		return matchingService.getDashboardUpcome(userId);
-//	}
-
+	@GetMapping("/dashboard/upcome")
+	@CheckPermission(roles = "ROLE_HOST")
+	public BaseResponse<List<MatchingDashboardUpcomeResponse>> getDashboardUpcome(HttpServletRequest request) {
+		Long userId = extractUserId(request);
+		return matchingService.getDashboardUpcome(userId);
+	}
 
 }

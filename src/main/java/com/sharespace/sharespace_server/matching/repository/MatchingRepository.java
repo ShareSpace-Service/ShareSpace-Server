@@ -23,6 +23,9 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 	@Query("SELECT COUNT(m) FROM Matching m WHERE m.place.id IN :placeIds AND m.status = :status")
 	Integer countByPlaceIdInAndStatus(@Param("placeIds") List<Long> placeIds, @Param("status") Status status);
 
+	@Query("SELECT m FROM Matching m WHERE m.status = :status AND m.expiryDate BETWEEN CURRENT_TIMESTAMP AND :threeDaysAfter ORDER BY m.expiryDate ASC")
+	List<Matching> findUpcomingMatches(@Param("status") Status status, @Param("threeDaysAfter") LocalDateTime threeDaysAfter);
+
 	// Matching을 조회할 때 Product와 Place를 한꺼번에 가져오는 메서드
 	@Query("SELECT m FROM Matching m JOIN FETCH m.product JOIN FETCH m.place")
 	List<Matching> findAllWithProductAndPlace();

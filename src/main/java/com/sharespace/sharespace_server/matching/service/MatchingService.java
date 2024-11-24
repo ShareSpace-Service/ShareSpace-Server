@@ -9,6 +9,10 @@ import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptR
 import com.sharespace.sharespace_server.matching.dto.response.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -464,10 +468,33 @@ public class MatchingService {
 		return baseResponseService.getSuccessResponse(response);
 	}
 
-//	@Transactional
-//	public BaseResponse<List<MatchingDashboardUpcomeResponse>> getDashboardUpcome(Long userId) {
-//		User user = findUser(userId);
-//		return baseResponseService.getSuccessResponse();
-//	}
+	@Transactional
+	public BaseResponse<List<MatchingDashboardUpcomeResponse>> getDashboardUpcome(Long userId) {
+		User user = findUser(userId);
+		List<Matching> matchings = getMatchingsByRole(user);
+
+		// 현재 시간 및 3일 후 계산
+		LocalDate currentDate = LocalDate.now();
+		LocalDate threeDaysAfter = currentDate.plusDays(3);
+
+		// expiryDate 3일 이내 필터링 및 정렬
+		List<Matching> filteredAndSortedMatchings = matchings.stream()
+				.filter(matching -> matching.getExpiryDate() != null &&
+						matching.getExpiryDate().toLocalDate().isAfter(currentDate) &&
+						matching.getExpiryDate().toLocalDate().isBefore(threeDaysAfter))
+				.sorted(Comparator.comparing(Matching::getExpiryDate)) // expiryDate 기준 오름차순 정렬
+				.collect(Collectors.toList());
+
+		List<MatchingDashboardUpcomeResponse> responses = filteredAndSortedMatchings.stream()
+				.map(matching -> {
+					// 남은 일수 계산
+					long remainingDays = ChronoUnit.DAYS.between(currentDate, matching.getExpiryDate().toLocalDate());
+
+					return matchingAssembler.toMatchingShowDashboard(matching, (int) remainingDays);
+				})
+				.collect(Collectors.toList());
+
+		return baseResponseService.getSuccessResponse(responses);
+	}
 
 }
