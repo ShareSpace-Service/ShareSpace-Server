@@ -56,17 +56,6 @@ jobs:
           source: "./docker-compose.yml"
           target: "/home/ubuntu"  # EC2 서버의 적절한 경로로 지정
 
-      # 환경 변수 설정
-      - name: Set environment variable on server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ubuntu
-          key: ${{ secrets.KEY }}
-          script: |
-            echo "export MAIL_SMTP_PASSWORD=${{ secrets.MAIL_SMTP_PASSWORD }}" >> ~/.bashrc
-            source ~/.bashrc
-
       ## docker compose up
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
