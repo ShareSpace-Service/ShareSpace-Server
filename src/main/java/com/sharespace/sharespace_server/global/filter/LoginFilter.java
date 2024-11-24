@@ -151,7 +151,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.addCookie(cookie);
 
         String cookieHeader = String.format(
-                "%s=%s; Max-Age=%d; Path=%s; Secure; HttpOnly; SameSite=Strict",
+                "%s=%s; Max-Age=%d; Path=%s; Secure; HttpOnly; SameSite=None",
                 cookieName,
                 jwtToken,
                 maxAge,
