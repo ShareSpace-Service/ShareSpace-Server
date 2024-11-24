@@ -6,8 +6,13 @@ import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.matching.dto.MatchingAssembler;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
+import com.sharespace.sharespace_server.matching.dto.response.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,22 +20,17 @@ import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.MatchingException;
 import com.sharespace.sharespace_server.global.exception.error.PlaceException;
-import com.sharespace.sharespace_server.global.exception.error.ProductException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUpdateRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUploadImageRequest;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllProductWithRoleResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.place.dto.MatchingPlaceDto;
-import com.sharespace.sharespace_server.place.dto.PlaceRequestedDetailResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceRequestedDetailResponse;
 import com.sharespace.sharespace_server.place.entity.Place;
 import com.sharespace.sharespace_server.place.repository.PlaceRepository;
 import com.sharespace.sharespace_server.product.dto.MatchingProductDto;
@@ -170,6 +170,8 @@ public class MatchingService {
 			.product(matchingProductDto)
 			.place(matchingPlaceDto)
 			.imageUrl(matching.getImage())
+			.guestCompleted(matching.isGuestCompleted())
+			.hostCompleted(matching.isHostCompleted())
 			.build();
 
 		return baseResponseService.getSuccessResponse(response);
@@ -254,8 +256,6 @@ public class MatchingService {
 	 */
 	@Transactional
 	public BaseResponse<Void> hostAcceptRequest(MatchingHostAcceptRequestRequest request) {
-		// TODO : 호스트 유효성 검증 필요
-		// TODO : 메서드 리네임 => 거절할 수도 있고 수락할 수도 있으니까
 		Matching matching = findMatching(request.getMatchingId());
 		if (request.isAccepted()) {
 			matching.setStatus(PENDING);
@@ -283,11 +283,15 @@ public class MatchingService {
 	 */
 	@Transactional
 	public BaseResponse<Void> guestConfirmStorage(MatchingGuestConfirmStorageRequest request) {
+		// FIXME : Fetch Join 쓰기
 		Matching matching = findMatching(request.getMatchingId());
 
 		matching.confirmStorageByGuest();
 
 		matchingRepository.save(matching);
+		
+		// 요청 수락하면 Host에게 알림 전송
+		notificationService.sendNotification(matching.getPlace().getUser().getId(), GUEST_COMPLETED_KEEPING.getMessage());
 		// TODO : IMAGE가 Null일 때 예외처리?
 		return baseResponseService.getSuccessResponse();
 	}
@@ -310,12 +314,6 @@ public class MatchingService {
 		User user = findUser(userId);
 		Matching matching = findMatching(matchingId);
 
-		// Matching 객체에게 취소 처리 위임
-		matching.cancel(user);
-
-		matchingRepository.save(matching);
-		
-		
 		// 알림 전송 로직
 		// 1. 요청 취소 주체 찾기 => userId
 			/* 1-1. 요청 취소의 주체가 Place의 owner, 즉, Host일 경우
@@ -329,6 +327,10 @@ public class MatchingService {
 			 */
 			notificationService.sendNotification(matching.getPlace().getUser().getId(), CANCELED_MATCHING.getMessage());
 		}
+		// Matching 객체에게 취소 처리 위임
+		matching.cancel(user);
+
+		matchingRepository.save(matching);
 		return baseResponseService.getSuccessResponse();
 	}
 
@@ -346,7 +348,6 @@ public class MatchingService {
 
 	@Transactional
 	public BaseResponse<Void> uploadImage(MatchingUploadImageRequest request) {
-		// TODO : 유효성 검증;이미지 업로드의 주체는 Host여야 함
 		// NOTE : 이미지 업로드'만' 했다고 알림이 전송되어선 안됨
 		Matching matching = findMatching(request.getMatchingId());
 		// 다중 이미지 S3에 업로드
@@ -389,7 +390,13 @@ public class MatchingService {
 			return matchingRepository.findMatchingWithProductByUserId(user.getId());
 		} else {
 			// Host면 Place + Matching 조회
-			return matchingRepository.findMatchingWithPlaceByUserId(user.getId());
+			// 2024-11-08 추가 Host는 Status가 미배정, 반려됨인 상태는 보여주지 않음
+			return matchingRepository.findMatchingWithPlaceByUserId(user.getId())
+				.stream()
+				.filter(matching -> !REJECTED.equals(matching.getStatus())
+					&& !UNASSIGNED.equals(matching.getStatus()))
+				.collect(Collectors.toList());
+
 		}
 	}
 
@@ -413,6 +420,8 @@ public class MatchingService {
 			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 
 		matching.updatePlace(place);
+		// 요청받은 Host에게 알림 전송
+		notificationService.sendNotification(place.getUser().getId(), REQUEST_KEEPING_TO_HOST.getMessage());
 		return baseResponseService.getSuccessResponse();
 	}
 
@@ -437,6 +446,57 @@ public class MatchingService {
 			.collect(Collectors.toList());
 
 		// 필터링된 매칭 리스트를 반환
+		return baseResponseService.getSuccessResponse(responses);
+	}
+
+	@Transactional
+	public BaseResponse<MatchingDashboardCountResponse> getDashboardCount(Long userId) {
+		List<Long> placeIds = placeRepository.findPlaceIdsByUserId(userId);
+
+		// Matching Status별 카운트 가져오기
+		Integer requestedCount = matchingRepository.countByPlaceIdInAndStatus(placeIds, Status.REQUESTED);
+		Integer pendingCount = matchingRepository.countByPlaceIdInAndStatus(placeIds, Status.PENDING);
+		Integer storedCount = matchingRepository.countByPlaceIdInAndStatus(placeIds, Status.STORED);
+
+		// 응답 객체 생성
+		MatchingDashboardCountResponse response = MatchingDashboardCountResponse.builder()
+				.requestedCount(requestedCount)
+				.pendingCount(pendingCount)
+				.storedCount(storedCount)
+				.build();
+
+		return baseResponseService.getSuccessResponse(response);
+	}
+
+	@Transactional
+	public BaseResponse<List<MatchingDashboardUpcomeResponse>> getDashboardUpcome(Long userId) {
+		User user = findUser(userId);
+		List<Matching> matchings = getMatchingsByRole(user);
+
+		// 현재 시간 및 3일 후 계산
+		LocalDate currentDate = LocalDate.now();
+		LocalDate threeDaysAfter = currentDate.plusDays(3);
+
+		// expiryDate 3일 이내 필터링 및 정렬
+		List<Matching> filteredAndSortedMatchings = matchings.stream()
+				.filter(matching -> matching.getExpiryDate() != null)
+				.filter(matching -> {
+					LocalDate expiryDate = matching.getExpiryDate().toLocalDate(); // LocalDate로 변환
+					return (expiryDate.isEqual(currentDate) ||  // 당일 반납
+							(expiryDate.isAfter(currentDate) && expiryDate.isBefore(threeDaysAfter))); // 3일 이내
+				})
+				.sorted(Comparator.comparing(Matching::getExpiryDate)) // expiryDate 기준 오름차순 정렬
+				.collect(Collectors.toList());
+
+		List<MatchingDashboardUpcomeResponse> responses = filteredAndSortedMatchings.stream()
+				.map(matching -> {
+					// 남은 일수 계산
+					long remainingDays = ChronoUnit.DAYS.between(currentDate, matching.getExpiryDate().toLocalDate());
+
+					return matchingAssembler.toMatchingShowDashboard(matching, (int) remainingDays);
+				})
+				.collect(Collectors.toList());
+
 		return baseResponseService.getSuccessResponse(responses);
 	}
 

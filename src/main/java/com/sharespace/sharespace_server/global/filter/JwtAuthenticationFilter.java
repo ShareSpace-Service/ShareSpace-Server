@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
 
-    private final String[] whiteListUris = new String[] {"/login", "/user/login", "/user/register", "/user/checkLogin", "/token/reissue", "/logout"};
+    private final String[] whiteListUris = new String[] {"/login", "/user/login", "/user/validate", "/user/register", "/user/checkLogin", "/token/reissue", "/logout", "/place/register"};
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -47,16 +47,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String authorizationHeader = request.getHeader(AUTHORIZATION);
+        String jwt;
+        String refreshToken;
+        try {
+            jwt = getJwtFromCookies(request, "accessToken");
+            refreshToken = getJwtFromCookies(request, "refreshToken");
+        } catch (CustomRuntimeException e) {
+            sendJwtExceptionResponse(response, e);
+            return;
+        }
 
-        if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
-            String jwt = extractAccessToken(request);
+        if (jwt != null) {
             try {
                 request.setAttribute("userId", extractUserIdFromToken(jwtProvider.getClaims(jwt)));
+                Authentication authentication = jwtProvider.getAuthentication(jwt);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (ExpiredJwtException e) {
-                // 에외가 터지면 클라이언트에게 401 에러와 Message 넘겨줘야됨
-                sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.EXPIRED_JWT_EXCEPTION));
-                return;
+                if (refreshToken != null) {
+                    request.setAttribute("expiredAccessToken", true);
+                } else {
+                    sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.EXPIRED_JWT_EXCEPTION));
+                    return;
+                }
             } catch (MalformedJwtException e) {
                 // 토큰 형식이 잘못되었을 때
                 sendJwtExceptionResponse(response, new CustomRuntimeException(JwtException.MALFORMED_JWT_EXCEPTION));
@@ -92,7 +104,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getJwtFromCookies(HttpServletRequest request, String cookieName) {
-        if (request.getCookies() == null) return null;
+        if (request.getCookies() == null) {
+            throw new CustomRuntimeException(JwtException.MISSING_COOKIE_TOKEN);
+        }
         for (Cookie cookie : request.getCookies()) {
             if (cookie.getName().equals(cookieName)) {
                 return cookie.getValue();

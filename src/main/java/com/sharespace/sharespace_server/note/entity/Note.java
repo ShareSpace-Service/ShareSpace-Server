@@ -29,11 +29,11 @@ public class Note {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "id1", nullable = false)
+	@JoinColumn(name = "sender", nullable = false)
 	public User sender;		// 송신자
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "id2", nullable = false)
+	@JoinColumn(name = "receiver", nullable = false)
 	public User receiver;		// 수신자
 
 	@Column(name = "title", nullable = false)
@@ -44,6 +44,9 @@ public class Note {
 
 	@Column(name = "send_at", nullable = false)
 	public LocalDateTime send_at;
+
+	@Column(name = "is_read", nullable = false)
+	public boolean isRead;
 
 	@Builder
 	public Note(User sender, User receiver, String title, String content, LocalDateTime send_at) {

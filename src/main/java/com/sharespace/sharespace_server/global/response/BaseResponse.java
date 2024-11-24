@@ -1,5 +1,7 @@
 package com.sharespace.sharespace_server.global.response;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 
 import lombok.Builder;
@@ -21,4 +23,7 @@ public class BaseResponse<T> {
 		this.data = data;
 	}
 
+	public static <T> BaseResponse<T> error(String message, HttpStatus status) {
+		return new BaseResponse<>(false, message, status, null);
+	}
 }

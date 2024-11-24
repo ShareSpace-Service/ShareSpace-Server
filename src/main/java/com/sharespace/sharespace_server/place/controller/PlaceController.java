@@ -10,12 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
-import com.sharespace.sharespace_server.place.dto.PlaceDetailResponse;
-import com.sharespace.sharespace_server.place.dto.PlaceRequest;
-import com.sharespace.sharespace_server.place.dto.PlaceUpdateRequest;
-import com.sharespace.sharespace_server.place.dto.PlacesResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceDetailResponse;
+import com.sharespace.sharespace_server.place.dto.response.PlaceEditResponse;
+import com.sharespace.sharespace_server.place.dto.request.PlaceRequest;
+import com.sharespace.sharespace_server.place.dto.request.PlaceUpdateRequest;
+import com.sharespace.sharespace_server.place.dto.response.PlacesResponse;
 import com.sharespace.sharespace_server.place.service.PlaceService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +34,7 @@ public class PlaceController {
 
 	// task: main 화면에 보일 장소 리스트 조회
 	@GetMapping
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<List<PlacesResponse>> getPlaces(HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return placeService.getAllPlaces(userId);
@@ -39,6 +42,7 @@ public class PlaceController {
 
 	// task: product 카테고리에 맞는 장소 리스트 조회
 	@GetMapping("/searchByProduct")
+	@CheckPermission(roles = "ROLE_GUEST")
 	public BaseResponse<List<PlacesResponse>> getLocationOptionsForItem(@RequestParam Long matchingId, HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return placeService.getLocationOptionsForItem(matchingId, userId);
@@ -46,20 +50,29 @@ public class PlaceController {
 
 	// task: 장소 디테일 조회
 	@GetMapping("/placeDetail")
+	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
 	public BaseResponse<PlaceDetailResponse> getPlaceDetailsForItem(@RequestParam Long placeId) {
 		return placeService.getPlaceDetail(placeId);
 	}
 
 	// task: 장소 등록
-	@PostMapping
-	public BaseResponse<String> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest,  HttpServletRequest httpRequest) {
+	@PostMapping("/register")
+	public BaseResponse<Void> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest) {
+		return placeService.createPlace(placeRequest);
+	}
+
+	// task: 장소 수정 전 기존 장소 디테일 조회
+	@GetMapping("/edit")
+	@CheckPermission(roles = "ROLE_HOST")
+	public BaseResponse<PlaceEditResponse> getUserPlaceForUpdate(HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
-		return placeService.createPlace(placeRequest, userId);
+		return placeService.getUserPlaceForUpdate(userId);
 	}
 
 	// task: 장소 수정
 	@PutMapping
-	public BaseResponse<String> updatePlace(@Valid @ModelAttribute PlaceUpdateRequest placeRequest, HttpServletRequest httpRequest) {
+	@CheckPermission(roles = "ROLE_HOST")
+	public BaseResponse<Void> updatePlace(@Valid @ModelAttribute PlaceUpdateRequest placeRequest, HttpServletRequest httpRequest) {
 		Long userId = RequestParser.extractUserId(httpRequest);
 		return placeService.updatePlace(placeRequest, userId);
 	}

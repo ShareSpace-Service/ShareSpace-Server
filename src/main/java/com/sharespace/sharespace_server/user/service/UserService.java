@@ -12,7 +12,7 @@ import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
-import com.sharespace.sharespace_server.user.dto.UserGetIdResponse;
+import com.sharespace.sharespace_server.user.dto.UserEmailValidateResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
@@ -52,7 +52,7 @@ public class UserService {
     private final TokenJpaRepository tokenJpaRepository;
     private final NotificationService notificationService;
 
-
+    // 유저 회원가입
     @Transactional
     public BaseResponse<UserRegisterResponse> register(UserRegisterRequest request) {
 
@@ -95,7 +95,7 @@ public class UserService {
 
     // 이메일 인증여부 업데이트
     @Transactional
-    public BaseResponse<Void> emailValidate(UserEmailValidateRequest request) {
+    public BaseResponse<UserEmailValidateResponse> emailValidate(UserEmailValidateRequest request) {
 
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
         // 이메일 인증 확인 메소드 호출
@@ -105,7 +105,11 @@ public class UserService {
         user.setEmailValidated(true);
         userRepository.save(user);
 
-        return baseResponseService.getSuccessResponse();
+        UserEmailValidateResponse userEmailResponse = UserEmailValidateResponse.builder()
+            .email(user.getEmail())
+            .build();
+
+        return baseResponseService.getSuccessResponse(userEmailResponse);
     }
 
     // 회원 정보 수정
@@ -127,6 +131,7 @@ public class UserService {
             user.setImage(newImageUrl);
         }
 
+        // 수정된 유저 정보 저장
         user.setLocation(request.getLocation());
         user.setLatitude(latitude);
         user.setLongitude(longitude);
@@ -168,15 +173,15 @@ public class UserService {
         // 토큰을 찾지 못했을 경우 예외처리
         Token token = tokenJpaRepository.findByUserId(userId).orElseThrow(() -> new CustomRuntimeException(JwtException.REFRESH_TOKEN_NOT_FOUND_EXCEPTION));
 
+        //
+        notificationService.removeAllEmittersByUserId(userId);
+
         // 1. AccessToken 블랙리스트에 추가
         tokenBlacklistService.addToBlacklist(accessToken);
 
         // 2. 쿠키 만료 처리
         expireCookie(response, "accessToken");
         expireCookie(response, "refreshToken");
-
-        // 로그아웃시 연결 해제
-        notificationService.removeSseEmitter(userId);
 
         // DB에서 토큰 삭제
         tokenJpaRepository.delete(token);
@@ -334,18 +339,12 @@ public class UserService {
         response.addCookie(cookie);
     }
 
+    // 로그인 여부 확인 메소드
     public BaseResponse<Void> checkLogin() {
         if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
             .anyMatch(grantedAuthority -> "ROLE_ANONYMOUS".equals(grantedAuthority.getAuthority()))) {
             throw new CustomRuntimeException(UserException.NOT_LOGGED_IN_USER);
         }
         return baseResponseService.getSuccessResponse();
-    }
-
-    public BaseResponse<UserGetIdResponse> getUserId(Long userId) {
-        return baseResponseService.getSuccessResponse(
-            UserGetIdResponse.builder()
-                .userId(userId)
-                .build());
     }
 }

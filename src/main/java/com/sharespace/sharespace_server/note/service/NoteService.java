@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 
 import com.sharespace.sharespace_server.global.enums.NotificationMessage;
 import com.sharespace.sharespace_server.global.enums.Role;
-import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.NoteException;
+import com.sharespace.sharespace_server.global.exception.error.PlaceException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
@@ -19,6 +19,7 @@ import com.sharespace.sharespace_server.note.dto.NoteDetailResponse;
 import com.sharespace.sharespace_server.note.dto.NoteRequest;
 import com.sharespace.sharespace_server.note.dto.NoteResponse;
 import com.sharespace.sharespace_server.note.dto.NoteSenderListResponse;
+import com.sharespace.sharespace_server.note.dto.NoteUnreadCountResponse;
 import com.sharespace.sharespace_server.note.entity.Note;
 import com.sharespace.sharespace_server.note.repository.NoteRepository;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
@@ -58,9 +59,7 @@ public class NoteService {
 	 */
 	@Transactional
 	public BaseResponse<List<NoteResponse>> getAllNotes(Long userId) {
-		User user = findUserById(userId);
-
-		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(user.getId()).stream()
+		List<NoteResponse> noteResponsesList = noteRepository.findAllByReceiverId(userId).stream()
 			.map(NoteResponse::toNoteResponse)
 			.collect(Collectors.toList());
 
@@ -80,7 +79,7 @@ public class NoteService {
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> createNote(NoteRequest noteRequest, Long userId) {
+	public BaseResponse<Void> createNote(NoteRequest noteRequest, Long userId) {
 		User sender = findUserById(userId);
 		User receiver = findUserById(noteRequest.getReceiverId());
 
@@ -91,7 +90,7 @@ public class NoteService {
 
 		// Receiver에게 알림 전송
 		notificationService.sendNotification(receiver.getId(), NotificationMessage.RECEIVED_NOTE.format(sender.getNickName()));
-		return baseResponseService.getSuccessResponse("쪽지 보내기 성공!");
+		return baseResponseService.getSuccessResponse();
 	}
 
 	/**
@@ -106,11 +105,11 @@ public class NoteService {
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<String> deleteNote(Long noteId) {
+	public BaseResponse<Void> deleteNote(Long noteId) {
 		Note note = findNoteById(noteId);
 		noteRepository.delete(note);
 
-		return baseResponseService.getSuccessResponse("쪽지 삭제 성공");
+		return baseResponseService.getSuccessResponse();
 	}
 
 	/**
@@ -130,6 +129,20 @@ public class NoteService {
 	}
 
 	/**
+	 * 쪽지 읽음 처리
+	 *
+	 * @param noteId 조회하고자 하는 쪽지 고유 ID
+	 * @return 성공 여부 반환
+	 * @Author thereisname
+	 */
+	@Transactional
+	public BaseResponse<Void> markNoteAsRead(Long noteId) {
+		Note note = findNoteById(noteId);
+		note.setRead(true);
+		return baseResponseService.getSuccessResponse();
+	}
+
+	/**
 	 * 로그인 사용자가 쪽지를 보낼 수 있는 발신자 리스트 조회
 	 * <p>
 	 *     사용자의 역할(Role)에 따라 매칭된 사용자 리스트를 조회하여, 쪽지를 보낼 수 있는 발신자 리스트를 반환
@@ -137,7 +150,6 @@ public class NoteService {
 	 *
 	 * @param userId 현재 로그인한 사용자의 고유 ID
 	 * @return 발신 가능한 사용자 리스트를 포함한 BaseResponse 객체
-	 * @throws CustomRuntimeException 발신 가능한 대상이 없을 경우 예외 발생
 	 * @Author thereisname
 	 */
 	@Transactional
@@ -145,11 +157,24 @@ public class NoteService {
 		User user = findUserById(userId);
 		List<NoteSenderListResponse> users = getUsersByRole(user);
 
-		if (users.isEmpty()) {
-			throw new CustomRuntimeException(NoteException.SENDER_NOT_FOUND);
-		}
-
 		return baseResponseService.getSuccessResponse(users);
+	}
+
+	/**
+	 * 받은 쪽지 중 안읽은 쪽지 개수 조회
+	 *
+	 * <p>Note 엔티티 컬럼 중 사용자가 받은 쪽지 중 is_read가 false인 값들의 개수를 조회</p>
+	 *
+	 * @param userId 현재 로그인한 사용자의 고유 ID
+	 * @return 읽지 않은 쪽지 개수 반환
+	 * @Author thereisname
+	 */
+	@Transactional
+	public BaseResponse<NoteUnreadCountResponse> getUnreadNote(Long userId) {
+		int unreadCount = noteRepository.findCountUnreadNotesByReceiverId(userId);
+		return baseResponseService.getSuccessResponse(
+			new NoteUnreadCountResponse(unreadCount)
+		);
 	}
 
 	// task: 사용자가 존재하는지 검증하고 사용자 객체 반환
@@ -178,7 +203,7 @@ public class NoteService {
 	private void validateMatchingForHostAndGuest(User host, User guest) {
 		Long placeId = placeRepository.findByUserId(host.getId())
 			.map(Place::getId)
-			.orElseThrow(() -> new CustomRuntimeException(NoteException.NOTE_NOT_MATCHING));
+			.orElseThrow(() -> new CustomRuntimeException(PlaceException.PLACE_NOT_FOUND));
 
 		List<Long> productIds = productRepository.findAllByUserId(guest.getId()).stream()
 			.map(Product::getId)
@@ -198,7 +223,7 @@ public class NoteService {
 
 	// task: 호스트 사용자가 발신할 수 있는 게스트 사용자 리스트 반환
 	private List<NoteSenderListResponse> getHostUserMatchingGuests(Long hostId) {
-		return matchingRepository.findAllByPlaceUserIdAndStatusIn(hostId, List.of(Status.PENDING, Status.STORED))
+		return matchingRepository.findAllByPlaceUserIdAndStatusIn(hostId)
 			.stream()
 			.map(matching -> matching.getProduct().getUser())
 			.distinct()
@@ -208,7 +233,7 @@ public class NoteService {
 
 	// task: 게스트 사용자가 발신할 수 있는 호스트 사용자 리스트 반환
 	private List<NoteSenderListResponse> getGuestUserMatchingHosts(Long guestId) {
-		return matchingRepository.findAllByProductUserIdAndStatusIn(guestId, List.of(Status.PENDING, Status.STORED))
+		return matchingRepository.findAllByProductUserIdAndStatusIn(guestId)
 			.stream()
 			.map(matching -> matching.getPlace().getUser())
 			.distinct()

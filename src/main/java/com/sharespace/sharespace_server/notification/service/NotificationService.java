@@ -7,13 +7,14 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.sharespace.sharespace_server.global.exception.error.NotificationException;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.notification.dto.response.NotificationAllResponse;
-import com.sharespace.sharespace_server.notification.dto.response.NotificationResponse;
+import com.sharespace.sharespace_server.notification.dto.response.NotificationUnreadNumberResponse;
 import com.sharespace.sharespace_server.user.entity.User;
 
 import org.springframework.data.domain.Page;
@@ -30,15 +31,18 @@ import com.sharespace.sharespace_server.notification.repository.NotificationRepo
 import com.sharespace.sharespace_server.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class NotificationService {
 
-	private final ConcurrentHashMap<Long, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
+	private final Map<Long, SseEmitter> userEmitters = new ConcurrentHashMap<>();
 	private final UserRepository userRepository;
 	private final NotificationRepository notificationRepository;
 	private final BaseResponseService baseResponseService;
+	private static final long TIMEOUT = 60 * 60 * 1000L; // 1시간
 
 	/**
 	 * SSE 구독 요청 처리
@@ -46,24 +50,44 @@ public class NotificationService {
 	 * @return SseEmitter 객체를 반환해서 SSE 연결
 	 */
 	public SseEmitter subscribe(Long userId) {
-		SseEmitter emitter = new SseEmitter(30000000L);
-		sseEmitters.put(userId, emitter);
-		// 기본적으로 연결 유지
+		SseEmitter emitter = new SseEmitter(TIMEOUT);
+		// 새로운 Emitter 등록
+		userEmitters.put(userId, emitter);
+
+		log.info("현재 userId = " + userId + " SSE 연결 생성");
+
+		// 연결 직후 초기 메시지 전송
+		sendInitialMessage(emitter);
+
+		// 연결 종료 시 처리
+		emitter.onCompletion(() -> removeEmitter(userId));
+		emitter.onTimeout(() -> removeEmitter(userId));
+		emitter.onError(e -> removeEmitter(userId));
+
+		return emitter;
+	}
+
+	private void removeEmitter(Long userId) {
+		SseEmitter emitter = userEmitters.remove(userId);
+		if (emitter != null) {
+			try {
+				emitter.complete();
+				log.info("userId = " + userId + " SSE 연결 종료");
+			} catch (Exception e) {
+				log.error("Error while completing emitter for user {}: {}", userId, e.getMessage());
+			}
+		}
+	}
+
+	private void sendInitialMessage(SseEmitter emitter) {
 		try {
 			emitter.send(SseEmitter.event()
 				.name("INIT")
-				.data("SSE 연결됨"));
-		} catch(IOException e) {
-			emitter.completeWithError(e);
+				.data("Connected!"));
+		} catch (IOException e) {
+			emitter.complete();
+			log.error("초기 메시지 전송 실패: {}", e.getMessage());
 		}
-		// 연결이 종료되면 emitter를 제거
-		emitter.onCompletion(() -> sseEmitters.remove(userId));
-		emitter.onTimeout(() -> {
-			removeSseEmitter(userId);
-			}
-		);
-
-		return emitter;
 	}
 
 	/**
@@ -72,25 +96,26 @@ public class NotificationService {
 	 * @param message 알림 메시지 내용
 	 */
 	@Transactional
-	public void sendNotification(Long userId, String message)  {
+	public void sendNotification(Long userId, String message) {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+
 		Notification notification = create(user, message);
 		notificationRepository.save(notification);
-		SseEmitter emitter = sseEmitters.get(userId);
+
+		SseEmitter emitter = userEmitters.get(userId);
 		if (emitter != null) {
 			try {
-				NotificationResponse response = NotificationResponse.builder()
-					.notificationId(notification.getId())
-					.message(message)
-					.build();
 				emitter.send(SseEmitter.event()
+					.id(userId.toString())
 					.name("NOTIFICATION")
-					.data(response));
+					.data(message));
 			} catch (IOException e) {
-				emitter.completeWithError(e);
-				sseEmitters.remove(userId);
+				log.error("Dead emitter for userId {}: {}", userId, e.getMessage());
+				removeEmitter(userId); // Dead Emitter 제거
 			}
+		} else {
+			log.warn("No active SSE connection for userId {}", userId);
 		}
 	}
 
@@ -124,7 +149,6 @@ public class NotificationService {
 		return baseResponseService.getSuccessResponse(response);
 	}
 
-
 	/**
 	 * 알림을 삭제하는 메서드
 	 * @param notificationId 삭제할 알림 ID
@@ -138,10 +162,46 @@ public class NotificationService {
 		return baseResponseService.getSuccessResponse();
 	}
 
-	public void removeSseEmitter(Long userId) {
-		SseEmitter emitter = sseEmitters.remove(userId);
-		if (emitter != null) {
-			emitter.complete();
+	@Transactional
+	public BaseResponse<Void> readAllNotifications(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		List<Notification> notifications = notificationRepository.findAllByUser(user);
+		for (Notification notification : notifications) {
+			notification.setRead(true);
 		}
+		return baseResponseService.getSuccessResponse();
+	}
+
+	public void sendNotificationTest() {
+		Long userId = 1L;
+		sendNotification(userId, "테스트 알림입니다.");
+	}
+
+	public BaseResponse<NotificationUnreadNumberResponse> getUnreadNotifcationNumber(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		int unreadNotificationsCount = notificationRepository.findUnreadNotificationsCountByUser(user);
+
+		return baseResponseService.getSuccessResponse(
+			NotificationUnreadNumberResponse.builder()
+				.unreadNotificationNum(unreadNotificationsCount)
+				.build());
+	}
+
+	// 알림 모두 지우기
+	@Transactional
+	public BaseResponse<Void> deleteAllNotifications(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+		notificationRepository.deleteAllByUser(user);
+		return baseResponseService.getSuccessResponse();
+	}
+
+	// 로그아웃시 호출될 메서드
+	public void removeAllEmittersByUserId(Long userId) {
+		removeEmitter(userId);
+		log.info("Removed SSE connection for user {}", userId);
 	}
 }
+

@@ -8,11 +8,9 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public enum PlaceException implements CustomException {
-	PLACE_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 장소입니다."),
-	PLACE_REGISTRATION_FAILED(HttpStatus.BAD_REQUEST, "장소 등록에 실패하였습니다."),
-	PLACE_REQUIRED_FIELDS_EMPTY(HttpStatus.BAD_REQUEST, "필수 입력 항목이 누락되었습니다. 모든 필드를 확인해 주세요."),
-	PLACE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 해당 사용자에 대한 장소가 존재합니다.");
-
+	PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 장소입니다."),
+	PLACE_REGISTRATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "장소 등록에 실패하였습니다."),
+	PLACE_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 사용자에 대한 장소가 존재합니다.");
 
 	private final HttpStatus status;
 	private final String message;

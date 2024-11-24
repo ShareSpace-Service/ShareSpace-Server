@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.jwt.controller;
 
+import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.jwt.service.JwtService;
 import jakarta.servlet.http.HttpServletResponse;

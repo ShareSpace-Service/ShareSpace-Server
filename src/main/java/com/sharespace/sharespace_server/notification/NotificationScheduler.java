@@ -24,7 +24,8 @@ public class NotificationScheduler {
 	@Scheduled(cron = "0 0 0 * * ?") // 매일 밤 자정에 실행한다는 의미의 크론식
 	public void sendExpiryNotifcations() {
 		LocalDateTime today = LocalDateTime.now();
-		List<Matching> matchingList = matchingRepository.findEligibleForNotification(STORED, CONFIRM_DAYS, today);
+		LocalDateTime targetDate = today.minusDays(CONFIRM_DAYS);
+		List<Matching> matchingList = matchingRepository.findEligibleForNotification(STORED, targetDate);
 
 
 		for (Matching matching : matchingList) {

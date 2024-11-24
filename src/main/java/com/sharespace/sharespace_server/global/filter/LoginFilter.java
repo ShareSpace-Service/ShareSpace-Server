@@ -144,10 +144,20 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     // 로그인 성공시 JWT를 쿠키에 저장한다.
     public void addJwtToCookie(HttpServletResponse response, String jwtToken, String cookieName, int maxAge) {
         Cookie cookie = new Cookie(cookieName, jwtToken);
-        cookie.setHttpOnly(false);
+        cookie.setHttpOnly(true);
         cookie.setSecure(false);
         cookie.setPath("/");
-        cookie.setMaxAge(maxAge); // 2시간
+        cookie.setMaxAge(maxAge);
         response.addCookie(cookie);
+
+        String cookieHeader = String.format(
+                "%s=%s; Max-Age=%d; Path=%s; Secure; HttpOnly; SameSite=Strict",
+                cookieName,
+                jwtToken,
+                maxAge,
+                "/"
+        );
+
+        response.addHeader("Set-Cookie", cookieHeader);
     }
 }
