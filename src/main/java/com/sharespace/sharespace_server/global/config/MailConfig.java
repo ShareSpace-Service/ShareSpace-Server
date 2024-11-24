@@ -30,7 +30,7 @@ public class MailConfig {
     @Value("teamsharespace@naver.com")
     private String username;
 
-    @Value("${MAIL_SMTP_PASSWORD}")
+    @Value("${spring.mail.password}")
     private String password;
 
     @Value("true")
