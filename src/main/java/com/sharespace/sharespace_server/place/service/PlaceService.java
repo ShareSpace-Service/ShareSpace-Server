@@ -128,8 +128,10 @@ public class PlaceService {
 	 * @Author thereisname
 	 */
 	@Transactional
-	public BaseResponse<Void> createPlace(PlaceRequest placeRequest, Long userId) {
-		User user = findByUser(userId);
+	public BaseResponse<Void> createPlace(PlaceRequest placeRequest, String email) {
+		// User user = findByUser(userId);
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
 
 		validatePlaceDoesNotExist(user.getId());
 

@@ -1,5 +1,6 @@
 package com.sharespace.sharespace_server.user.service;
 
+
 import com.sharespace.sharespace_server.global.exception.CustomRuntimeException;
 import com.sharespace.sharespace_server.global.exception.error.JwtException;
 import com.sharespace.sharespace_server.global.exception.error.UserException;
@@ -21,10 +22,14 @@ import com.sharespace.sharespace_server.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -50,6 +55,7 @@ public class UserService {
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenJpaRepository tokenJpaRepository;
     private final NotificationService notificationService;
+    private final CustomUserDetailService customUserDetailService;
 
     // 유저 회원가입
     @Transactional
@@ -94,16 +100,24 @@ public class UserService {
 
     // 이메일 인증여부 업데이트
     @Transactional
-    public BaseResponse<Void> emailValidate(UserEmailValidateRequest request) {
+    public BaseResponse<Void> emailValidate(UserEmailValidateRequest request, HttpServletRequest servletRequest) {
 
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
+        String email = user.getEmail();
+        UserDetails userDetails = customUserDetailService.loadUserByUsername(email);
         // 이메일 인증 확인 메소드 호출
         System.out.println(request.getValidationNumber());
-        verifyCode(user.getEmail(), request.getValidationNumber());
+        verifyCode(email, request.getValidationNumber());
 
         user.setEmailValidated(true);
         userRepository.save(user);
 
+        // 임시 로그인 상태 만들어주기
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails.getUsername(),
+            null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        
         return baseResponseService.getSuccessResponse();
     }
 
