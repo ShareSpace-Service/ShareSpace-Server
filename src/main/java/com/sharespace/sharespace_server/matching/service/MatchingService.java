@@ -499,5 +499,4 @@ public class MatchingService {
 
 		return baseResponseService.getSuccessResponse(responses);
 	}
-
 }
