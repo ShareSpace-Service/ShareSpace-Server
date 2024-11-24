@@ -183,6 +183,11 @@ public class UserService {
         expireCookie(response, "accessToken");
         expireCookie(response, "refreshToken");
 
+        // 3. HTTP 캐싱 방지 헤더 추가
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+
         // DB에서 토큰 삭제
         tokenJpaRepository.delete(token);
 
@@ -336,7 +341,14 @@ public class UserService {
         cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(0);  // 즉시 만료
-        response.addCookie(cookie);
+
+        // SameSite 속성 추가
+        String cookieHeader = String.format(
+                "%s=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=None",
+                tokenName
+        );
+        response.addHeader("Set-Cookie", cookieHeader);
+
     }
 
     // 로그인 여부 확인 메소드
