@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.sharespace.sharespace_server.global.enums.Status;
@@ -18,6 +19,12 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 	List<Matching> findAllByStatus(Status status);
 
 	Matching findByProductId(Long ProductId);
+
+	@Query("SELECT COUNT(m) FROM Matching m WHERE m.place.id IN :placeIds AND m.status = :status")
+	Integer countByPlaceIdInAndStatus(@Param("placeIds") List<Long> placeIds, @Param("status") Status status);
+
+	@Query("SELECT m FROM Matching m WHERE m.status = :status AND m.expiryDate BETWEEN CURRENT_TIMESTAMP AND :threeDaysAfter ORDER BY m.expiryDate ASC")
+	List<Matching> findUpcomingMatches(@Param("status") Status status, @Param("threeDaysAfter") LocalDateTime threeDaysAfter);
 
 	// Matching을 조회할 때 Product와 Place를 한꺼번에 가져오는 메서드
 	@Query("SELECT m FROM Matching m JOIN FETCH m.product JOIN FETCH m.place")
