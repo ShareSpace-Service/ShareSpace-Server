@@ -100,7 +100,7 @@ public class UserService {
 
     // 이메일 인증여부 업데이트
     @Transactional
-    public BaseResponse<Void> emailValidate(UserEmailValidateRequest request, HttpServletRequest servletRequest) {
+    public BaseResponse<Void> emailValidate(UserEmailValidateRequest request) {
 
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
         String email = user.getEmail();
