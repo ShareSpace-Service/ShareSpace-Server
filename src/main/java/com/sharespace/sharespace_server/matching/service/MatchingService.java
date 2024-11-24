@@ -6,6 +6,7 @@ import com.sharespace.sharespace_server.global.utils.S3ImageUpload;
 import com.sharespace.sharespace_server.matching.dto.MatchingAssembler;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
+import com.sharespace.sharespace_server.matching.dto.response.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,10 +22,6 @@ import com.sharespace.sharespace_server.global.response.BaseResponseService;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUpdateRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUploadImageRequest;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllProductWithRoleResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
 import com.sharespace.sharespace_server.matching.entity.Matching;
 import com.sharespace.sharespace_server.matching.repository.MatchingRepository;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
@@ -447,5 +444,30 @@ public class MatchingService {
 		// 필터링된 매칭 리스트를 반환
 		return baseResponseService.getSuccessResponse(responses);
 	}
+
+	@Transactional
+	public BaseResponse<MatchingDashboardCountResponse> getDashboardCount(Long userId) {
+		List<Long> placeIds = placeRepository.findPlaceIdsByUserId(userId);
+
+		// Matching Status별 카운트 가져오기
+		Integer requestedCount = matchingRepository.countByPlaceIdInAndStatus(placeIds, Status.REQUESTED);
+		Integer pendingCount = matchingRepository.countByPlaceIdInAndStatus(placeIds, Status.PENDING);
+		Integer storedCount = matchingRepository.countByPlaceIdInAndStatus(placeIds, Status.STORED);
+
+		// 응답 객체 생성
+		MatchingDashboardCountResponse response = MatchingDashboardCountResponse.builder()
+				.requestedCount(requestedCount)
+				.pendingCount(pendingCount)
+				.storedCount(storedCount)
+				.build();
+
+		return baseResponseService.getSuccessResponse(response);
+	}
+
+//	@Transactional
+//	public BaseResponse<List<MatchingDashboardUpcomeResponse>> getDashboardUpcome(Long userId) {
+//		User user = findUser(userId);
+//		return baseResponseService.getSuccessResponse();
+//	}
 
 }

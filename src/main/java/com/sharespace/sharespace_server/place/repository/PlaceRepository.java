@@ -16,4 +16,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
 	@Query("SELECT p FROM Place p WHERE p.period >= :period")
 	List<Place> findPlacesByPeriod(@Param("period") int period);
+
+	@Query("SELECT p.id FROM Place p WHERE p.user.id = :userId")
+	List<Long> findPlaceIdsByUserId(@Param("userId") Long userId);
 }

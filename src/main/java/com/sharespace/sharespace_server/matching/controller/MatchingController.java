@@ -6,6 +6,7 @@ import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.enums.Status;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingGuestConfirmStorageRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingHostAcceptRequestRequest;
+import com.sharespace.sharespace_server.matching.dto.response.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,10 +23,6 @@ import com.sharespace.sharespace_server.matching.dto.request.MatchingCompleteSto
 import com.sharespace.sharespace_server.matching.dto.request.MatchingKeepRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUpdateRequest;
 import com.sharespace.sharespace_server.matching.dto.request.MatchingUploadImageRequest;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllProductWithRoleResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowAllResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
-import com.sharespace.sharespace_server.matching.dto.response.MatchingShowRequestDetailResponse;
 import com.sharespace.sharespace_server.matching.service.MatchingService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -127,6 +124,20 @@ public class MatchingController {
 		Long userId = extractUserId(request);
 		return matchingService.getProductsByPlace(placeId, userId);
 	}
+
+	@GetMapping("/dashboard/count")
+	@CheckPermission(roles = "ROLE_HOST")
+	public BaseResponse<MatchingDashboardCountResponse> getDashboardCount(HttpServletRequest request) {
+		Long userId = extractUserId(request);
+		return matchingService.getDashboardCount(userId);
+	}
+
+//	@GetMapping("/dashboard/upcome")
+//	@CheckPermission(roles = "ROLE_HOST")
+//	public BaseResponse<List<MatchingDashboardUpcomeResponse>> getDashboardCount(HttpServletRequest request) {
+//		Long userId = extractUserId(request);
+//		return matchingService.getDashboardUpcome(userId);
+//	}
 
 
 }
