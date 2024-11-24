@@ -4,6 +4,7 @@ import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
 import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
+import com.sharespace.sharespace_server.user.dto.UserEmailValidateResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
@@ -29,7 +30,7 @@ public class UserController {
 
     // task: 이메일 인증
     @PostMapping("/validate")
-    public BaseResponse<Void> emailValidate(@Valid @RequestBody UserEmailValidateRequest request) {
+    public BaseResponse<UserEmailValidateResponse> emailValidate(@Valid @RequestBody UserEmailValidateRequest request) {
         return userService.emailValidate(request);
     }
 

@@ -56,11 +56,9 @@ public class PlaceController {
 	}
 
 	// task: 장소 등록
-	@PostMapping
-	@CheckPermission(roles = "ROLE_HOST")
-	public BaseResponse<Void> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest,  HttpServletRequest httpRequest) {
-		Long userId = RequestParser.extractUserId(httpRequest);
-		return placeService.createPlace(placeRequest, userId);
+	@PostMapping("/register")
+	public BaseResponse<Void> registerPlace(@Valid @ModelAttribute PlaceRequest placeRequest) {
+		return placeService.createPlace(placeRequest);
 	}
 
 	// task: 장소 수정 전 기존 장소 디테일 조회

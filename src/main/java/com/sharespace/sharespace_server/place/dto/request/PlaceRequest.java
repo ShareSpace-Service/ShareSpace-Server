@@ -16,6 +16,8 @@ import lombok.Setter;
 @Getter
 @RequiredArgsConstructor
 public class PlaceRequest {
+	@NotNull(message = "이메일 정보가 없습니다.")
+	private String email;
 	@NotNull(message = "Title을 입력해주세요")
 	@Size(max = 50, message = "제목은 50자 이내로 작성해주세요")
 	private String title;

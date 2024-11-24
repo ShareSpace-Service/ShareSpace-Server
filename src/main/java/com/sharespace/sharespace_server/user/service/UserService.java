@@ -12,6 +12,7 @@ import com.sharespace.sharespace_server.jwt.repository.TokenJpaRepository;
 import com.sharespace.sharespace_server.jwt.service.TokenBlacklistService;
 import com.sharespace.sharespace_server.notification.service.NotificationService;
 import com.sharespace.sharespace_server.user.dto.UserEmailValidateRequest;
+import com.sharespace.sharespace_server.user.dto.UserEmailValidateResponse;
 import com.sharespace.sharespace_server.user.dto.UserGetInfoResponse;
 import com.sharespace.sharespace_server.user.dto.UserRegisterRequest;
 import com.sharespace.sharespace_server.user.dto.UserRegisterResponse;
@@ -94,7 +95,7 @@ public class UserService {
 
     // 이메일 인증여부 업데이트
     @Transactional
-    public BaseResponse<Void> emailValidate(UserEmailValidateRequest request) {
+    public BaseResponse<UserEmailValidateResponse> emailValidate(UserEmailValidateRequest request) {
 
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new CustomRuntimeException(UserException.MEMBER_NOT_FOUND));
         // 이메일 인증 확인 메소드 호출
@@ -104,7 +105,11 @@ public class UserService {
         user.setEmailValidated(true);
         userRepository.save(user);
 
-        return baseResponseService.getSuccessResponse();
+        UserEmailValidateResponse userEmailResponse = UserEmailValidateResponse.builder()
+            .email(user.getEmail())
+            .build();
+
+        return baseResponseService.getSuccessResponse(userEmailResponse);
     }
 
     // 회원 정보 수정
