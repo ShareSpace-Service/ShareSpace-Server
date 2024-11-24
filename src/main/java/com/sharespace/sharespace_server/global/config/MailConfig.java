@@ -30,7 +30,7 @@ public class MailConfig {
     @Value("teamsharespace@naver.com")
     private String username;
 
-    @Value("${mail.password}")
+    @Value("${MAIL_SMTP_PASSWORD}")
     private String password;
 
     @Value("true")
