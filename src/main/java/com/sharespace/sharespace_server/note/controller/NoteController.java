@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/note")
+@RequestMapping("/api/note")
 @Slf4j
 public class NoteController {
 	private final NoteService noteService;

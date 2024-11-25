@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/place")
+@RequestMapping("/api/place")
 @Slf4j
 public class PlaceController {
 	private final PlaceService placeService;

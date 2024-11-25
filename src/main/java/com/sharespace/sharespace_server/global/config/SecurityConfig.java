@@ -38,7 +38,7 @@ public class SecurityConfig{
     @Bean
     public LoginFilter loginFilter(AuthenticationManager authenticationManager, UserService userService) {
         LoginFilter loginFilter = new LoginFilter(authenticationManager, jwtService, userService);
-        loginFilter.setFilterProcessesUrl("/user/login"); // 로그인 엔드포인트 설정
+        loginFilter.setFilterProcessesUrl("/api/user/login"); // 로그인 엔드포인트 설정
         return loginFilter;
     }
 

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/contact")
+@RequestMapping(value = "/api/contact")
 @RequiredArgsConstructor
 public class ContactController {
     private final ContactService contactService;

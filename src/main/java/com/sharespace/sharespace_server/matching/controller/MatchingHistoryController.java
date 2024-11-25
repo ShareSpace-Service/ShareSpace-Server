@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/history")
+@RequestMapping("/api/history")
 public class MatchingHistoryController {
 	private final MatchingHistoryService matchingHistoryService;
 

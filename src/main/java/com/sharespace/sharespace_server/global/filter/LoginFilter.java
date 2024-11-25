@@ -143,7 +143,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     // 로그인 성공시 JWT를 쿠키에 저장한다.
     public void addJwtToCookie(HttpServletResponse response, String jwtToken, String cookieName, int maxAge) {
-        // Cookie cookie = new Cookie(cookieName, jwtToken);
+        Cookie cookie = new Cookie(cookieName, jwtToken);
         // cookie.setHttpOnly(true);
         // cookie.setSecure(true);
         // cookie.setPath("/");

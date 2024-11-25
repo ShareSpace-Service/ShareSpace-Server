@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RestController
-@RequestMapping("/notification")
+@RequestMapping("/api/notification")
 @RequiredArgsConstructor
 public class NotificationController {
 

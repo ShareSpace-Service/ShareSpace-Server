@@ -33,7 +33,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/matching")
+@RequestMapping("/api/matching")
 public class MatchingController {
 	private final MatchingService matchingService;
 
