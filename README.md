@@ -86,6 +86,30 @@
 - 모든 API 요청에 `/api` 접두사를 추가하여 정적 파일과 구분
 
 ### 남윤형
+#### 🔑 회원가입 및 인증
+- JavaMailSender를 활용하여 회원가입 후 이메일 인증 처리
+- `@Scheduled`를 사용해 자정마다 이메일 미인증 사용자 삭제
+- BCryptPasswordEncoder를 사용한 비밀번호 암호화 및 저장
+#### 🔐 로그인 및 인증
+- JWT(JSON Web Token) 기반 인증 시스템 구현
+- 로그인 성공 시 쿠키에 SameSite=None, Secure, HttpOnly 설정
+- Custom LoginFilter를 통한 다양한 로그인 실패 조건 처리
+- Refresh Token을 사용한 토큰 재발급 기능 구현
+- Access Token을 블랙리스트(HashSet)로 관리하여 즉시 무효화 처리
+- BlackList 된 Access Token을 스케줄러 작업을 통해 주기적으로 삭제
+#### 📩 JavaMailSender
+- 6자리 난수 생성 후 스프링 라이브러리를 활용하여 사용자 이메일로 전송
+- ConcurrentHashMap 활용 Java In-Memory 난수코드 저장 및 검증
+- 전송 실패 시 예외 처리 및 재시도 로직 구현
+#### 🗺️ 카카오 API 연동
+- 도로명/지번 주소 기반으로 카카오 지도 API를 활용하여 위경도 데이터 수집
+- 좌표 정보 수집하여 거리 계산 위한 정보 제공
+#### 🖥️ 호스트 대쉬보드
+- 매칭 항목 `STORED` 상태의 expiry_date와 Java LocalDate 비교하여 반납 3일 이하 항목 추출
+- 매칭 항목 `REQUESTED` `PENDING` `STORED` 상태 각 개수를 추출 및 반환
+#### ➕기타 등록시스템
+- 관리자에게 전달 가능한 문의하기 기능 구현
+- GUEST 유저와 관계성 있는 product 등록 기능 구현 
 ### 전창민
 #### 🏡 장소 관리 시스템
 - 장소 등록 및 수정 기능 구현 (다중 이미지 처리 및 이미지 URL 데이터베이스 저장 포함)
