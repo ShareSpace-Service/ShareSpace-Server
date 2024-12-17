@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sharespace.sharespace_server.global.annotation.CheckPermission;
 import com.sharespace.sharespace_server.global.response.BaseResponse;
+import com.sharespace.sharespace_server.global.utils.RequestParser;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingHistoryResponse;
 import com.sharespace.sharespace_server.matching.dto.response.MatchingShowKeepDetailResponse;
 import com.sharespace.sharespace_server.matching.service.MatchingHistoryService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -23,8 +25,9 @@ public class MatchingHistoryController {
 
 	@GetMapping
 	@CheckPermission(roles = {"ROLE_GUEST", "ROLE_HOST"})
-	public BaseResponse<List<MatchingHistoryResponse>> getHistory() {
-		return matchingHistoryService.getHistory();
+	public BaseResponse<List<MatchingHistoryResponse>> getHistory(HttpServletRequest httpRequest) {
+		Long userId = RequestParser.extractUserId(httpRequest);
+		return matchingHistoryService.getHistory(userId);
 	}
 
 	@GetMapping("/detail")
