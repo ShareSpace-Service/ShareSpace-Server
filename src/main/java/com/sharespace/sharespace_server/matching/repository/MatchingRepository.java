@@ -18,6 +18,12 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 	Optional<Matching> findByProductIdAndPlaceId(Long productId, Long placeId);
 	List<Matching> findAllByStatus(Status status);
 
+	@Query("SELECT m FROM Matching m JOIN FETCH m.place p WHERE m.status = :status AND p.user.id = :userId")
+	List<Matching> findHistoryByStatusAndHost(@Param("status") Status status, @Param("userId") Long userId);
+
+	@Query("SELECT m FROM Matching m JOIN FETCH m.product p WHERE m.status = :status AND p.user.id = :userId")
+	List<Matching> findHistoryByStatusAndGuest(@Param("status") Status status, @Param("userId") Long userId);
+
 	Matching findByProductId(Long ProductId);
 
 	@Query("SELECT COUNT(m) FROM Matching m WHERE m.place.id IN :placeIds AND m.status = :status")
